@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { ClosingCta, Eyebrow } from "@/components/ui";
 import { AiByTeam, PrivacyBlock, TechStack, WaysToStart, WorkTypes } from "@/components/sections";
 import { capabilityGroups } from "@/lib/services";
@@ -38,15 +39,23 @@ export default function Services() {
           <h2 className="h-display max-w-2xl text-3xl sm:text-4xl">Everything we do</h2>
           <div className="mt-10 space-y-5">
             {capabilityGroups.map((g) => (
-              <div key={g.name} className="grid gap-4 rounded-xl border border-line bg-ink-2 p-7 md:grid-cols-[1fr_1.4fr] md:gap-10">
+              <Link
+                key={g.slug}
+                href={`/services/${g.slug}`}
+                className="group grid gap-4 rounded-xl border border-line bg-ink-2 p-7 transition-colors hover:border-teal md:grid-cols-[1fr_1.4fr] md:gap-10"
+              >
                 <div>
-                  <h3 className="text-xl font-semibold">{g.name}</h3>
+                  <p className="font-mono text-sm text-teal">{String(g.figure.n).padStart(2, "0")}</p>
+                  <h3 className="mt-1 text-xl font-semibold">{g.name}</h3>
                   <p className="mt-2 text-sm text-slate-300">{g.summary}</p>
                 </div>
-                <ul className="grid gap-2 text-slate-200 sm:grid-cols-2">
-                  {g.items.map((i) => <li key={i} className="flex gap-2 text-sm"><span className="text-teal">▸</span>{i}</li>)}
-                </ul>
-              </div>
+                <div className="flex flex-col justify-between gap-4">
+                  <ul className="grid gap-2 text-slate-200 sm:grid-cols-2">
+                    {g.items.slice(0, 4).map((i) => <li key={i} className="flex gap-2 text-sm"><span className="text-teal">▸</span>{i}</li>)}
+                  </ul>
+                  <p className="text-sm font-semibold text-teal">Explore {g.name} <span aria-hidden="true" className="inline-block transition-transform group-hover:translate-x-1">→</span></p>
+                </div>
+              </Link>
             ))}
           </div>
         </div>

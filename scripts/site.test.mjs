@@ -230,8 +230,9 @@ test('contact page lists 9 service options', () => {
   assert.ok(html.includes('Not sure yet'), 'missing "Not sure yet" option');
 });
 
-test('services page lists the new SEO, speed and hosting items', () => {
-  const html = readBuilt('/services');
+test('service detail pages list the new SEO, speed and hosting items', () => {
+  // The /services index shows only the first four items per group and links to the detail pages, which carry the full lists.
+  const html = serviceSlugs.map((slug) => readBuilt(`/services/${slug}`)).join('\n');
   const expected = [
     'SEO optimization (technical SEO, content structure, search visibility)',
     'Website speed and Core Web Vitals',
@@ -240,9 +241,9 @@ test('services page lists the new SEO, speed and hosting items', () => {
     'Right-sizing infrastructure to cut hosting and production costs',
   ];
   for (const text of expected) {
-    assert.ok(html.includes(text), `services page is missing "${text}"`);
+    assert.ok(html.includes(text), `service detail pages are missing "${text}"`);
   }
-  assert.ok(!html.includes('Infrastructure cost review'), 'services page still lists "Infrastructure cost review"');
+  assert.ok(!html.includes('Infrastructure cost review'), 'service detail pages still list "Infrastructure cost review"');
 });
 
 /** Visible text of an html fragment: comments and tags stripped, basic entities decoded, whitespace collapsed. */
@@ -405,4 +406,23 @@ test('services menu button is wired for accessibility', () => {
   assert.ok(menu, 'header has no collapsed services menu button with aria-controls');
   const id = menu.match(/aria-controls="([^"]+)"/)[1];
   assert.ok(header.includes(`id="${id}"`), `aria-controls target #${id} does not exist in the header HTML`);
+});
+
+test('services index links each group to its detail page and shows the AI-by-team and tech stack sections', () => {
+  const html = readBuilt('/services');
+  const main = extractTag(html, 'main');
+  serviceSlugs.forEach((slug, i) => {
+    const count = main.split(`href="/services/${slug}"`).length - 1;
+    assert.equal(count, 1, `expected exactly one link to /services/${slug} inside <main>, got ${count}`);
+    const anchor = main.match(new RegExp(String.raw`<a[^>]*href="/services/${slug}"[^>]*>([\s\S]*?)</a>`));
+    assert.ok(anchor, `no anchor element for /services/${slug} inside <main>`);
+    const text = visibleText(anchor[1]);
+    const figure = String(i + 1).padStart(2, '0');
+    assert.ok(text.includes(figure), `row for ${slug} is missing figure number ${figure}`);
+    assert.ok(text.includes('Explore'), `row for ${slug} is missing the Explore affordance`);
+  });
+  const text = visibleText(main);
+  for (const heading of ['Everything we do', 'AI for every team', 'Automation tailored to how each team works', 'Tech stack', 'Ways to start']) {
+    assert.ok(text.includes(heading), `services index is missing "${heading}"`);
+  }
 });
