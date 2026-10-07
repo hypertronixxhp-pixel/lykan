@@ -5,19 +5,72 @@ import { solutions } from "@/lib/solutions";
 import { PrivacyBlock, TechStack } from "@/components/sections";
 import { WorkPreview } from "@/components/CaseCards";
 import { capabilityGroups } from "@/lib/services";
-import { steps } from "@/lib/steps";
+import { claims } from "@/lib/claims";
+
+const aiCards = [
+  {
+    title: "Handle customer questions",
+    text: "Chatbots and support assistants on your site that answer routine questions and hand the rest to a person.",
+    eg: "e.g. a help assistant that knows your product pages and policies",
+  },
+  {
+    title: "Take repetitive work off the team",
+    text: "Workflow automation and back-office agents that move information between the tools you already use.",
+    eg: "e.g. sorting incoming requests and filling in the follow-up forms",
+  },
+  {
+    title: "See what is happening",
+    text: "Dashboards and anomaly detection that bring the signals in your data to the people who act on them.",
+    eg: "e.g. an alert when orders or costs drift from their usual pattern",
+  },
+  {
+    title: "Produce content and data at scale",
+    text: "AI content generation and database population, reviewed by your team before it goes live.",
+    eg: "e.g. drafting catalogue descriptions or seeding a directory from public sources",
+  },
+];
+
+const processRows = [
+  {
+    title: "Start with the problem",
+    text: "We begin with the task your team needs done, then pick the simplest technology that does it well.",
+  },
+  {
+    title: "One team from design to deployment",
+    text: "The people who design the product also build, test and run it, so nothing is lost between handoffs.",
+  },
+  {
+    title: "Automate the repetitive parts",
+    text: "Routine steps in the build and in your operations are automated, which leaves time for the decisions that matter.",
+  },
+];
+
+/** Secondary claim lines for the capability rows that carry one. */
+const capabilityClaims: Record<string, string> = {
+  optimize: claims.speed,
+  cloud: claims.hosting,
+  "business-systems": claims.revenue,
+};
 
 export default function Home() {
   return (
     <>
-      <section className="py-20 sm:py-28">
-        <div className="wrap grid items-center gap-14 lg:grid-cols-2">
+      <section className="relative overflow-hidden py-20 sm:py-28">
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 bottom-0 select-none text-center font-semibold uppercase leading-none tracking-[0.12em] text-white/[0.04]"
+          style={{ fontSize: "clamp(5rem, 22vw, 20rem)" }}
+        >
+          Lykan
+        </span>
+        <div className="wrap relative grid items-center gap-14 lg:grid-cols-2">
           <div>
-            <Eyebrow>Complex products. Quietly delivered.</Eyebrow>
+            <p className="mb-5 inline-block rounded-full border border-line px-3 py-1 text-xs font-medium text-slate-300">Private engineering partner</p>
             <h1 className="h-display rise text-4xl sm:text-6xl">Engineering ambitious products with discretion.</h1>
             <p className="rise-2 measure mt-6 text-lg text-slate-300">
               Lykan Cloud &amp; AI Services partners with teams to design and build web applications, cloud systems, and useful AI. We work closely with the people behind the product and share project details on their terms.
             </p>
+            <p className="rise-2 mt-4 text-base font-medium text-teal">{claims.cost}</p>
             <div className="rise-3 mt-8 flex flex-wrap gap-3">
               <Button href="/contact">Discuss a project</Button>
               <Button href="/solutions" variant="ghost">See what we build</Button>
@@ -31,36 +84,86 @@ export default function Home() {
         </div>
       </section>
 
-      <PrivacyBlock />
+      <section className="py-24">
+        <div className="wrap">
+          <Eyebrow>Applied AI</Eyebrow>
+          <h2 className="h-display max-w-2xl text-3xl sm:text-4xl">Give your team its time back.</h2>
+          <p className="measure mt-4 text-slate-300">Your people already know the work. We build the systems that take the routine parts off their plate.</p>
+          <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            {aiCards.map((c) => (
+              <article key={c.title} data-ai-card className="flex flex-col rounded-xl border border-line bg-ink-2 p-7">
+                <h3 className="text-lg font-semibold">{c.title}</h3>
+                <p className="mt-3 text-slate-300">{c.text}</p>
+                <p className="mt-5 border-t border-line pt-4 text-sm text-steel">{c.eg}</p>
+              </article>
+            ))}
+          </div>
+          <Button href="/contact" className="mt-10">Talk through your workflows</Button>
+        </div>
+      </section>
 
       <section className="light-band py-24">
         <div className="wrap">
-          <h2 className="h-display max-w-xl text-3xl sm:text-4xl">What we do</h2>
-          <p className="measure mt-4 text-slate-600">We start with the business task, then choose the technology.</p>
-          <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {capabilityGroups.map((g) => (
-              <article key={g.name} className="rounded-xl border border-line-light bg-white p-8">
-                <h3 className="text-xl font-semibold">{g.name}</h3>
-                <p className="mt-3 text-slate-600">{g.summary}</p>
-                <ul className="mt-5 space-y-2 border-t border-line-light pt-5 text-sm">
-                  {g.items.slice(0, 4).map((d) => <li key={d} className="flex gap-2"><span className="text-teal">▸</span>{d}</li>)}
-                </ul>
-              </article>
+          <Eyebrow tone="light">How we work</Eyebrow>
+          <h2 className="h-display max-w-2xl text-3xl sm:text-4xl">{claims.timeline}</h2>
+          <ol className="mt-12 space-y-4">
+            {processRows.map((r, i) => (
+              <li key={r.title} data-process-row className="grid gap-4 rounded-xl border border-line-light bg-white p-6 sm:grid-cols-[auto_1fr_1.4fr] sm:items-center sm:gap-8 sm:p-8">
+                <span className="font-mono text-2xl text-text">{String(i + 1).padStart(2, "0")}</span>
+                <h3 className="text-xl font-semibold">{r.title}</h3>
+                <p className="text-slate-600">{r.text}</p>
+              </li>
             ))}
-            <article className="flex flex-col justify-between rounded-xl border border-dashed border-line-light p-8">
-              <div>
-                <h3 className="text-xl font-semibold">Not sure where to start?</h3>
-                <p className="mt-3 text-slate-600">Describe the problem and we will suggest a sensible first step.</p>
-              </div>
-              <Button href="/services" variant="ghostLight" className="mt-6 self-start">See every service</Button>
-            </article>
+          </ol>
+        </div>
+      </section>
+
+      <section className="py-24">
+        <div className="wrap">
+          <Eyebrow>Capabilities</Eyebrow>
+          <h2 className="h-display max-w-2xl text-3xl sm:text-4xl">Everything from first sketch to production</h2>
+          <div className="mt-12 space-y-4">
+            {capabilityGroups.map((g) => (
+              <Link
+                key={g.slug}
+                href={`/services/${g.slug}`}
+                className="group grid gap-3 rounded-xl border border-line bg-ink-2 p-6 transition-colors hover:border-teal sm:grid-cols-[auto_1fr_1.4fr] sm:items-center sm:gap-8"
+              >
+                <span className="font-mono text-sm text-teal">{String(g.figure.n).padStart(2, "0")}</span>
+                <span className="text-lg font-semibold">{g.name}</span>
+                <span className="text-sm text-slate-300">
+                  {g.summary}
+                  {capabilityClaims[g.slug] && <span className="mt-2 block font-medium text-teal">{capabilityClaims[g.slug]}</span>}
+                </span>
+              </Link>
+            ))}
           </div>
         </div>
       </section>
 
       <WorkPreview />
 
+      <section className="light-band py-24">
+        <div className="wrap">
+          <Eyebrow tone="light">How we engage</Eyebrow>
+          <h2 className="h-display max-w-2xl text-3xl sm:text-4xl">Two ways to work with us</h2>
+          <div className="mt-12 grid gap-6 md:grid-cols-2">
+            <article className="rounded-xl border border-line-light bg-white p-8">
+              <h3 className="text-xl font-semibold">Established teams</h3>
+              <p className="mt-3 text-slate-600">You have a product, a platform or an operation that needs to run better. We join your team, learn your systems and improve them without disrupting the work underway.</p>
+            </article>
+            <article className="rounded-xl border border-line-light bg-white p-8">
+              <h3 className="text-xl font-semibold">New products</h3>
+              <p className="mt-3 text-slate-600">You have an idea and need it built properly. We take it from rough concept to a running product with one team.</p>
+              <p className="mt-4 border-t border-line-light pt-4 text-sm font-medium text-text">{claims.cost}</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
       <TechStack />
+
+      <PrivacyBlock />
 
       <section className="py-24">
         <div className="wrap">
@@ -77,22 +180,6 @@ export default function Home() {
               </Link>
             ))}
           </div>
-        </div>
-      </section>
-
-      <section className="light-band py-24">
-        <div className="wrap">
-          <h2 className="h-display max-w-xl text-3xl sm:text-4xl">How we work together</h2>
-          <ol className="mt-12 grid gap-6 md:grid-cols-4">
-            {steps.map((s, i) => (
-              <li key={s.title} className="rounded-xl border border-line-light bg-white p-6">
-                <span className="text-sm font-medium text-steel">0{i + 1}</span>
-                <h3 className="mt-2 font-semibold">{s.title}</h3>
-                <p className="mt-2 text-sm text-slate-600">{s.text}</p>
-                <p className="mt-4 border-t border-line-light pt-3 text-sm"><b>Output:</b> {s.output}</p>
-              </li>
-            ))}
-          </ol>
         </div>
       </section>
 

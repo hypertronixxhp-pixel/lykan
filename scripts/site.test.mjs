@@ -517,3 +517,65 @@ test('services index shows the SEO, speed, hosting and revenue-growth items', ()
   }
   assert.ok(!text.includes('Infrastructure cost review'), 'services index still lists "Infrastructure cost review"');
 });
+
+test('home shows the claims', async () => {
+  const { claims } = await import('../lib/claims.ts');
+  const text = visibleText(extractTag(readBuilt('/'), 'main'));
+  assert.ok(text.includes(claims.timeline), 'home is missing the timeline claim');
+  const costCount = text.split(claims.cost).length - 1;
+  assert.ok(costCount >= 2, `expected the cost claim in the hero and the engage card, got ${costCount}`);
+  for (const key of ['speed', 'hosting', 'revenue']) {
+    assert.ok(text.includes(claims[key]), `home is missing the ${key} claim`);
+  }
+});
+
+test('home has the four AI cards, three process rows, nine capability links, three case cards, two engagement cards', () => {
+  const main = extractTag(readBuilt('/'), 'main');
+  const text = visibleText(main);
+  for (const t of [
+    'Handle customer questions',
+    'Take repetitive work off the team',
+    'See what is happening',
+    'Produce content and data at scale',
+    'Start with the problem',
+    'One team from design to deployment',
+    'Automate the repetitive parts',
+    'Established teams',
+    'New products',
+  ]) {
+    assert.ok(text.includes(t), `home is missing "${t}"`);
+  }
+  assert.ok(text.includes('Talk through your workflows'), 'home is missing the AI CTA');
+  assert.ok(main.includes('href="/contact"'), 'home is missing a link to /contact');
+  for (const slug of serviceSlugs) {
+    const n = main.split(`href="/services/${slug}"`).length - 1;
+    assert.equal(n, 1, `home: expected one link to /services/${slug} inside <main>, got ${n}`);
+  }
+  const cases = main.split('href="/work/').length - 1;
+  assert.equal(cases, 3, `home: expected 3 case links, got ${cases}`);
+  const aiCards = [...main.matchAll(/<article[^>]*data-ai-card[^>]*>([\s\S]*?)<\/article>/g)];
+  assert.equal(aiCards.length, 4, `home: expected 4 AI cards, got ${aiCards.length}`);
+  for (const [, body] of aiCards) {
+    assert.ok(/e\.g\./i.test(visibleText(body)), 'an AI card is missing its "e.g." line');
+    assert.ok(!/\d|%/.test(visibleText(body)), 'an AI card contains a figure');
+  }
+  const rows = [...main.matchAll(/<li[^>]*data-process-row[^>]*>([\s\S]*?)<\/li>/g)];
+  assert.equal(rows.length, 3, `home: expected 3 process rows, got ${rows.length}`);
+});
+
+test('home contains no testimonial or stats section', () => {
+  const text = visibleText(extractTag(readBuilt('/'), 'main')).toLowerCase();
+  for (const word of ['testimonial', 'launches', 'years of']) {
+    assert.ok(!text.includes(word), `home contains "${word}"`);
+  }
+});
+
+test('home hero shows the pill and sub-line', async () => {
+  const { claims } = await import('../lib/claims.ts');
+  const html = readBuilt('/');
+  const hero = html.match(/<section[^>]*>(?:(?!<\/section>)[\s\S])*?<h1[\s>](?:(?!<\/section>)[\s\S])*<\/section>/);
+  assert.ok(hero, 'home hero section not found');
+  const text = visibleText(hero[0]);
+  assert.ok(text.includes('Private engineering partner'), 'hero is missing the pill');
+  assert.ok(text.includes(claims.cost), 'hero is missing the cost sub-line');
+});
