@@ -218,3 +218,29 @@ test('every internal link resolves to a built route', () => {
   assert.deepEqual(broken, [], `Internal links with no built page: ${broken.join(', ')}`);
   assert.ok(seen.size > 1, 'link crawl found no pages beyond the home page');
 });
+
+test('contact page lists 9 service options', () => {
+  const html = readBuilt('/contact');
+  const select = html.match(/<select[^>]*id="topic"[^>]*>([\s\S]*?)<\/select>/);
+  assert.ok(select, 'topic select not found on /contact');
+  const values = [...select[1].matchAll(/<option[^>]*value="([^"]*)"/g)].map((m) => m[1]);
+  const services = values.filter((v) => v !== '' && v !== 'Something else');
+  assert.equal(services.length, 9, `expected 9 service options, got ${services.length}: ${services.join(', ')}`);
+  assert.ok(values.includes('Something else'), 'missing "Something else" option');
+  assert.ok(html.includes('Not sure yet'), 'missing "Not sure yet" option');
+});
+
+test('services page lists the new SEO, speed and hosting items', () => {
+  const html = readBuilt('/services');
+  const expected = [
+    'SEO optimization (technical SEO, content structure, search visibility)',
+    'Website speed and Core Web Vitals',
+    'Hosting and production cost reduction',
+    'Conversion and revenue growth support',
+    'Right-sizing infrastructure to cut hosting and production costs',
+  ];
+  for (const text of expected) {
+    assert.ok(html.includes(text), `services page is missing "${text}"`);
+  }
+  assert.ok(!html.includes('Infrastructure cost review'), 'services page still lists "Infrastructure cost review"');
+});
