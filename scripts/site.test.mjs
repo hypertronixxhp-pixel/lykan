@@ -59,6 +59,9 @@ const isIgnoredLink = (href) =>
 
 const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
+/** Boundary regex for "30%": matches claim contexts but not CSS arbitrary values like left-[30%]. */
+const thirtyPercentRegex = /(?<![\[\d.])30%(?![\]\d])/;
+
 /** Case-insensitive matcher for a banned term: not inside a longer word/number, but a trailing full stop is allowed. */
 export function bannedTermRegExp(term) {
   return new RegExp(`(?<![\\w.])${escapeRegExp(term)}(?!\\w|\\.\\w)`, 'i');
@@ -112,22 +115,20 @@ test('banned terms never appear in built output', () => {
 });
 
 test('30% boundary regex matches claim context but not CSS arbitrary values', () => {
-  const re = /(?<![\[\d.])30%(?![\]\d])/;
   // Should match: claim contexts
-  assert.ok(re.test('save 30% today'), 'matches "save 30% today"');
-  assert.ok(re.test('up to 30% faster'), 'matches "up to 30% faster"');
-  assert.ok(re.test('30%.'), 'matches "30%." with trailing period');
+  assert.ok(thirtyPercentRegex.test('save 30% today'), 'matches "save 30% today"');
+  assert.ok(thirtyPercentRegex.test('up to 30% faster'), 'matches "up to 30% faster"');
+  assert.ok(thirtyPercentRegex.test('30%.'), 'matches "30%." with trailing period');
   // Should NOT match: CSS arbitrary values and numeric contexts
-  assert.ok(!re.test('left-[30%]'), 'does not match CSS arbitrary value "left-[30%]"');
-  assert.ok(!re.test('w-[130%]'), 'does not match larger percentage "w-[130%]"');
-  assert.ok(!re.test('130%'), 'does not match digit-prefixed "130%"');
-  assert.ok(!re.test('30.5%'), 'does not match decimal "30.5%"');
+  assert.ok(!thirtyPercentRegex.test('left-[30%]'), 'does not match CSS arbitrary value "left-[30%]"');
+  assert.ok(!thirtyPercentRegex.test('w-[130%]'), 'does not match larger percentage "w-[130%]"');
+  assert.ok(!thirtyPercentRegex.test('130%'), 'does not match digit-prefixed "130%"');
+  assert.ok(!thirtyPercentRegex.test('30.5%'), 'does not match decimal "30.5%"');
 });
 
 test('claim numbers exist only in lib/claims.ts', () => {
   // Check for "15 weeks" as literal substring and "30%" with boundary regex
   // (regex prevents false positives from CSS values like left-[30%])
-  const thirtyPercentRegex = /(?<![\[\d.])30%(?![\]\d])/;
   const dirs = ['app', 'components', 'lib'];
   const hits = [];
 
