@@ -16,9 +16,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return g ? { title: g.name, description: g.summary } : {};
 }
 
-/** Lower-case the leading letter for use mid-sentence, keeping acronyms such as "AI" intact. */
-const inSentence = (name: string) => name.replace(/^[A-Z](?![A-Z])/, (c) => c.toLowerCase());
-
 export default async function ServicePage({ params }: Props) {
   const { slug } = await params;
   const g = getGroup(slug);
@@ -37,19 +34,19 @@ export default async function ServicePage({ params }: Props) {
         </div>
       </section>
 
-      <StandOutGrid service={inSentence(g.name)} items={g.standOut} />
+      <StandOutGrid service={g.name} items={g.standOut} />
 
       <section className="light-band py-20">
         <div className="wrap grid gap-12 md:grid-cols-2">
           <div>
-            <Eyebrow>In practice</Eyebrow>
+            <Eyebrow tone="light">In practice</Eyebrow>
             <p className="h-display max-w-xl text-2xl sm:text-3xl">{g.inPractice}</p>
           </div>
           <div>
             <h2 className="text-2xl font-semibold">What we offer</h2>
             <ul className="mt-4 space-y-2 text-slate-700">
               {g.items.map((item) => (
-                <li key={item} className="flex gap-2"><span className="text-steel">▸</span>{item}</li>
+                <li key={item} className="flex gap-2"><span aria-hidden="true" className="text-steel">▸</span>{item}</li>
               ))}
             </ul>
           </div>
@@ -60,7 +57,7 @@ export default async function ServicePage({ params }: Props) {
 
       <section className="light-band py-20">
         <div className="wrap">
-          <h2 className="h-display max-w-2xl text-3xl sm:text-4xl">{`Questions about ${inSentence(g.name)}`}</h2>
+          <h2 className="h-display max-w-2xl text-3xl sm:text-4xl">{`Questions about ${g.name}`}</h2>
           <div className="mt-10"><Faq items={g.faqs} tone="light" /></div>
         </div>
       </section>

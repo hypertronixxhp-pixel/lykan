@@ -11,8 +11,9 @@ export function Button({ href, children, variant = "primary", className = "" }: 
   return <Link href={href} className={`${base} ${styles} ${className}`}>{children}</Link>;
 }
 
-export function Eyebrow({ children }: { children: ReactNode }) {
-  return <p className="mb-4 text-xs font-medium uppercase tracking-[0.18em] text-teal">{children}</p>;
+export function Eyebrow({ children, tone = "dark" }: { children: ReactNode; tone?: "dark" | "light" }) {
+  // "light" is for light-band sections: text-text (#172235) on stone (#f5f7fa) clears WCAG AA; teal does not.
+  return <p className={`mb-4 text-xs font-medium uppercase tracking-[0.18em] ${tone === "light" ? "text-text" : "text-teal"}`}>{children}</p>;
 }
 
 export function ClosingCta({ title = "Tell us what your team needs to build.", text = "Share the problem at a level you are comfortable with. We can discuss sensitive details in a direct conversation.", button = "Start a private conversation" }: { title?: string; text?: string; button?: string }) {

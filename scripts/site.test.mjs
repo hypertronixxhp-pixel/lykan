@@ -336,7 +336,9 @@ test('unknown service slug does not build', () => {
 test('stand-out heading is a single text node', () => {
   const html = readBuilt('/services/design');
   assert.ok(!html.includes('What makes our <!-- -->'), 'stand-out heading still has split text nodes');
-  assert.ok(visibleText(html).includes('What makes our design stand out'));
+  assert.ok(visibleText(html).includes('What makes our Design service stand out'));
+  assert.ok(visibleText(html).includes('Questions about Design'));
+  assert.ok(visibleText(readBuilt('/services/quality-support')).includes('What makes our Quality & support service stand out'));
   for (const slug of serviceSlugs) {
     assert.ok(!readBuilt(`/services/${slug}`).includes('<!-- -->'), `${slug}: page has split text nodes`);
   }
