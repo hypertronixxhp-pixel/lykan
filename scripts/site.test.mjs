@@ -265,12 +265,88 @@ function articleTexts(html) {
   return [...html.matchAll(/<article[^>]*>([\s\S]*?)<\/article>/g)].map((m) => visibleText(m[1]));
 }
 
-test('case cards and case pages are qualitative', () => {
+test('case cards and case pages are qualitative', async () => {
+  const { projects } = await import('../lib/work.ts');
   const cards = articleTexts(readBuilt('/work'));
   assert.equal(cards.length, 6, `expected 6 case cards on /work, got ${cards.length}`);
   for (const text of cards) {
     assert.ok(!/\d/.test(text), `case card contains a digit: "${text}"`);
   }
+  for (const { slug } of projects) {
+    const text = visibleText(extractTag(readBuilt(`/work/${slug}`), 'main'));
+    assert.ok(!/\d/.test(text), `/work/${slug} main text contains a digit`);
+  }
+});
+
+const caseSlugs = [
+  'property-portal',
+  'holiday-rental-booking',
+  'rental-marketplace',
+  'investment-platform',
+  'design-studio-portfolio',
+  'construction-operations',
+];
+
+test('all six case pages render', async () => {
+  const { projects } = await import('../lib/work.ts');
+  assert.deepEqual(projects.map((p) => p.slug), caseSlugs);
+  for (const p of projects) {
+    const html = readBuilt(`/work/${p.slug}`);
+    const h1s = [...html.matchAll(/<h1[\s>]/g)].length;
+    assert.equal(h1s, 1, `${p.slug}: expected exactly one h1, got ${h1s}`);
+    const main = extractTag(html, 'main');
+    const text = visibleText(main);
+    assert.ok(text.includes(p.title), `${p.slug}: missing title`);
+    for (const chip of p.highlights) {
+      assert.ok(text.includes(chip), `${p.slug}: missing highlight chip "${chip}"`);
+    }
+    const dl = main.match(/<dl[\s>][\s\S]*?<\/dl>/);
+    assert.ok(dl, `${p.slug}: no <dl> details panel`);
+    const dlText = visibleText(dl[0]);
+    assert.ok(dlText.includes('Industry') && dlText.includes(p.industry), `${p.slug}: details panel missing Industry`);
+    assert.ok(dlText.includes('Scope'), `${p.slug}: details panel missing Scope`);
+    for (const s of p.scope) assert.ok(dlText.includes(s), `${p.slug}: details panel missing scope "${s}"`);
+  }
+});
+
+test('case pages carry no client, year, duration or link rows', () => {
+  for (const slug of caseSlugs) {
+    const main = extractTag(readBuilt(`/work/${slug}`), 'main');
+    const labels = [...main.matchAll(/<dt[^>]*>([\s\S]*?)<\/dt>/g)].map((m) => visibleText(m[1]));
+    assert.deepEqual(labels, ['Industry', 'Scope'], `${slug}: unexpected details rows ${labels.join(', ')}`);
+  }
+});
+
+test('construction case renders no empty headings', () => {
+  const main = extractTag(readBuilt('/work/construction-operations'), 'main');
+  assert.ok(!/<h[23][^>]*>\s*<\/h[23]>/.test(main), 'empty heading element');
+  assert.ok(!/<\/h[23]>\s*<h[1-6][\s>]/.test(main), 'heading immediately followed by another heading');
+  assert.ok(!/<\/h[23]>\s*<(\w+)[^>]*>\s*<\/>/.test(main), 'heading followed by an empty element');
+  const text = visibleText(main);
+  assert.ok(!/undefined|null/.test(text), 'page text contains undefined or null');
+  assert.ok(text.includes('Project summary'), 'missing Project summary heading');
+  for (const h of ['About the client', 'Challenge', 'Solution', 'Results']) {
+    assert.ok(!text.includes(h), `construction case should not show "${h}"`);
+  }
+});
+
+test('unknown work slug does not build', () => {
+  assert.ok(!fs.existsSync(path.join(appDir, 'work', 'nope.html')), 'work/nope.html was built');
+  assert.ok(builtPath('/work/property-portal'), 'expected a real case page to be built');
+});
+
+test('case cards link to their case pages', () => {
+  const main = extractTag(readBuilt('/work'), 'main');
+  for (const slug of caseSlugs) {
+    const n = main.split(`href="/work/${slug}"`).length - 1;
+    assert.equal(n, 1, `/work: expected one link to /work/${slug}, got ${n}`);
+  }
+});
+
+test('work note wording', () => {
+  const text = visibleText(extractTag(readBuilt('/work'), 'main'));
+  assert.ok(text.includes('Client names, locations, and figures are withheld by agreement.'), '/work is missing the work note');
+  assert.ok(!text.includes('results are withheld'), '/work still says results are withheld');
 });
 
 test('work page shows the six case titles and scope pills', () => {

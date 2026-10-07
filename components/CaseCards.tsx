@@ -1,18 +1,35 @@
+import Link from "next/link";
 import { Button, Eyebrow } from "@/components/ui";
 import { projects, type Project } from "@/lib/work";
 
-export const WORK_NOTE = "Client names, locations, and results are withheld by agreement.";
+export const WORK_NOTE = "Client names, locations, and figures are withheld by agreement.";
 
 export function ProjectCard({ p }: { p: Project }) {
   return (
-    <article className="flex flex-col rounded-xl border border-line bg-ink-2 p-7">
-      <p className="text-xs text-steel">{p.category}</p>
-      <h3 className="mt-2 text-xl font-semibold">{p.title}</h3>
-      <p className="mt-2 text-slate-300">{p.summary}</p>
-      <ul className="mt-5 flex flex-wrap gap-2 border-t border-line pt-4" aria-label="Services provided">
-        {p.scope.map((s) => <li key={s} className="rounded-full border border-line px-3 py-1 text-xs text-slate-300">{s}</li>)}
-      </ul>
-    </article>
+    <Link href={`/work/${p.slug}`} className="group block h-full">
+      <article className="flex h-full flex-col rounded-xl border border-line bg-ink-2 p-7 transition-colors group-hover:border-teal">
+        <p className="text-xs text-steel">{p.category}</p>
+        <h3 className="mt-2 text-xl font-semibold">{p.title}</h3>
+        <p className="mt-2 text-slate-300">{p.summary}</p>
+        <ul className="mt-5 flex flex-wrap gap-2 border-t border-line pt-4" aria-label="Services provided">
+          {p.scope.map((s) => <li key={s} className="rounded-full border border-line px-3 py-1 text-xs text-slate-300">{s}</li>)}
+        </ul>
+        <p className="mt-5 text-sm font-medium text-teal">
+          View case <span aria-hidden="true">→</span>
+        </p>
+      </article>
+    </Link>
+  );
+}
+
+/** One stacked section of a case page. Renders nothing when there is no text, so empty headings never appear. */
+export function CaseSection({ title, text }: { title: string; text?: string }) {
+  if (!text || !text.trim()) return null;
+  return (
+    <section>
+      <h2 className="text-2xl font-semibold">{title}</h2>
+      <p className="measure mt-3 text-slate-700">{text}</p>
+    </section>
   );
 }
 

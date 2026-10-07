@@ -1,4 +1,4 @@
-// Client work, described by type only. No client names, places, dates, figures or results.
+// Client work, described by type only. Results are qualitative; there are no client names, places, dates or figures.
 // Add or remove entries freely; the Work page, home-page teaser and case pages all read this list.
 // Case text is qualitative on purpose: no digits, no names, no slogans.
 export type CaseSections = {
