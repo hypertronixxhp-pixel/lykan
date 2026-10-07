@@ -1,22 +1,37 @@
 import Link from "next/link";
 import { Wordmark } from "./Header";
-import { nav } from "@/lib/nav";
+import { capabilityGroups } from "@/lib/services";
+import { solutions } from "@/lib/solutions";
+
+const columns: { heading: string; links: [label: string, href: string][] }[] = [
+  { heading: "Company", links: [["About", "/about"], ["Work", "/work"], ["Contact", "/contact"]] },
+  { heading: "Services", links: capabilityGroups.map((g) => [g.name, `/services/${g.slug}`]) },
+  { heading: "Solutions", links: solutions.map((s) => [s.name, `/solutions/${s.slug}`]) },
+  { heading: "Connect", links: [["Contact Lykan", "/contact"]] },
+];
 
 export default function Footer() {
   return (
     <footer className="border-t border-line bg-ink py-12 text-sm text-slate-400">
-      <div className="wrap flex flex-col justify-between gap-8 sm:flex-row">
-        <div>
+      <div className="wrap flex flex-col justify-between gap-10 lg:flex-row">
+        <div className="lg:max-w-xs">
           <Wordmark />
           <p className="mt-3 max-w-xs">Lykan Cloud &amp; AI Services. Complex products, quietly delivered.</p>
         </div>
-        <ul className="flex flex-wrap gap-x-6 gap-y-2">
-          {nav.map(([l, h]) => (
-            <li key={h}><Link href={h} className="hover:text-white">{l}</Link></li>
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-10">
+          {columns.map((c) => (
+            <div key={c.heading}>
+              <h2 className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-300">{c.heading}</h2>
+              <ul className="mt-4 space-y-2">
+                {c.links.map(([l, h]) => (
+                  <li key={`${c.heading}-${h}`}><Link href={h} className="hover:text-white">{l}</Link></li>
+                ))}
+              </ul>
+            </div>
           ))}
-        </ul>
+        </div>
       </div>
-      <p className="wrap mt-8 text-xs text-slate-500">The solution showcases on this site are illustrative designs, not client engagements. Real client work is confidential.</p>
+      <p className="wrap mt-10 text-xs text-slate-500">The solution showcases on this site are illustrative designs, not client engagements. Real client work is confidential.</p>
     </footer>
   );
 }

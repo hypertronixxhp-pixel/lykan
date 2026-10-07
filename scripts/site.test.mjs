@@ -366,3 +366,43 @@ test('business-systems page shows the revenue claim', async () => {
     'business-systems page is missing the revenue claim',
   );
 });
+
+function extractTag(html, tag) {
+  const m = html.match(new RegExp(String.raw`<${tag}[\s>][\s\S]*?</${tag}>`));
+  assert.ok(m, `home page has no <${tag}>`);
+  return m[0];
+}
+
+test('header contains links to all nine service pages', () => {
+  const header = extractTag(readBuilt('/'), 'header');
+  for (const slug of serviceSlugs) {
+    assert.ok(header.includes(`href="/services/${slug}"`), `header is missing a link to /services/${slug}`);
+  }
+  assert.ok(header.includes('href="/services"'), 'header is missing a link to /services');
+});
+
+test('footer contains the grouped columns', () => {
+  const footer = extractTag(readBuilt('/'), 'footer');
+  for (const slug of serviceSlugs) {
+    assert.ok(footer.includes(`href="/services/${slug}"`), `footer is missing a link to /services/${slug}`);
+  }
+  for (const slug of ['logistics-control-platform', 'procurement-intelligence-workspace', 'media-operations-hub']) {
+    assert.ok(footer.includes(`href="/solutions/${slug}"`), `footer is missing a link to /solutions/${slug}`);
+  }
+  for (const href of ['/about', '/work', '/contact']) {
+    assert.ok(footer.includes(`href="${href}"`), `footer is missing a link to ${href}`);
+  }
+  const text = visibleText(footer);
+  for (const heading of ['Company', 'Services', 'Solutions', 'Connect']) {
+    assert.ok(text.includes(heading), `footer is missing the "${heading}" heading`);
+  }
+});
+
+test('services menu button is wired for accessibility', () => {
+  const header = extractTag(readBuilt('/'), 'header');
+  const buttons = [...header.matchAll(/<button[^>]*>/g)].map((m) => m[0]);
+  const menu = buttons.find((b) => b.includes('aria-expanded="false"') && /aria-controls="[^"]+"/.test(b) && !b.includes('mobile-nav'));
+  assert.ok(menu, 'header has no collapsed services menu button with aria-controls');
+  const id = menu.match(/aria-controls="([^"]+)"/)[1];
+  assert.ok(header.includes(`id="${id}"`), `aria-controls target #${id} does not exist in the header HTML`);
+});
