@@ -59,6 +59,26 @@ const isIgnoredLink = (href) =>
 
 const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
+/** Case-insensitive matcher for a banned term: not inside a longer word/number, but a trailing full stop is allowed. */
+export function bannedTermRegExp(term) {
+  return new RegExp(`(?<![\\w.])${escapeRegExp(term)}(?!\\w|\\.\\w)`, 'i');
+}
+
+test('banned-term matcher boundaries', () => {
+  const re = bannedTermRegExp('Foo Bar');
+  assert.ok(re.test('we met Foo Bar. Then'), 'term followed by full stop and space');
+  assert.ok(re.test('"text":"met foo bar."}'), 'term followed by full stop and quote');
+  assert.ok(re.test('ends with Foo Bar.'), 'term followed by full stop at end');
+  assert.ok(re.test('<b>Foo Bar</b>'), 'term followed by tag');
+  assert.ok(!re.test('xFoo Bar'), 'term inside a longer word (prefix)');
+  assert.ok(!re.test('Foo Barn'), 'term inside a longer word (suffix)');
+  assert.ok(!re.test('Foo Bar.baz'), 'term followed by dot-word');
+  const num = bannedTermRegExp('7.25');
+  assert.ok(!num.test('rated 17.25 overall'), 'numeric term inside a larger number');
+  assert.ok(num.test('rated 7.25 overall'), 'standalone numeric term');
+  assert.ok(num.test('rated 7.25.'), 'standalone numeric term before full stop');
+});
+
 test('home page builds', () => {
   const html = readBuilt('/');
   assert.match(html, /<html[\s>]/i);
@@ -78,7 +98,7 @@ test('banned terms never appear in built output', () => {
   assert.ok(terms.length > 0, 'scripts/banned-terms.local.txt has no terms');
   const patterns = terms.map((term, i) => ({
     index: i + 1,
-    re: new RegExp(`(?<![\\w.])${escapeRegExp(term)}(?![\\w.])`, 'i'),
+    re: bannedTermRegExp(term),
   }));
   const files = allBuiltHtml();
   assert.ok(files.length > 0, 'no built html files found; run npm run build first');
