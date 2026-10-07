@@ -111,6 +111,79 @@ test('banned terms never appear in built output', () => {
   assert.deepEqual(hits, [], `Banned terms found in built output:\n${hits.join('\n')}`);
 });
 
+test('claim numbers exist only in lib/claims.ts', () => {
+  // Look for claim phrases, not just numbers (avoids matching CSS values like left-[30%])
+  const claimPhrases = [
+    '15 weeks',
+    '30% lower',  // More specific than just "30%" to avoid CSS false positives
+  ];
+  const dirs = ['app', 'components', 'lib'];
+  const hits = [];
+
+  function walk(dir, dirName = '') {
+    try {
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        const full = path.join(dir, entry.name);
+        const rel = dirName ? `${dirName}/${entry.name}` : entry.name;
+
+        // Skip lib/claims.ts
+        if (rel === 'lib/claims.ts') continue;
+
+        if (entry.isDirectory()) {
+          walk(full, rel);
+        } else if (entry.isFile() && (entry.name.endsWith('.ts') || entry.name.endsWith('.tsx') || entry.name.endsWith('.js') || entry.name.endsWith('.jsx'))) {
+          const content = fs.readFileSync(full, 'utf8');
+          for (const phrase of claimPhrases) {
+            if (content.includes(phrase)) {
+              hits.push(`${rel}: contains "${phrase}"`);
+            }
+          }
+        }
+      }
+    } catch (e) {
+      // Directory might not exist, that's ok
+    }
+  }
+
+  for (const dir of dirs) {
+    walk(path.join(root, dir), dir);
+  }
+
+  assert.deepEqual(hits, [], `Claim phrases found outside lib/claims.ts:\n${hits.join('\n')}`);
+});
+
+test('claims module exports the five claim strings', async () => {
+  const claimsPath = path.join(root, 'lib', 'claims.ts');
+  const claimsUrl = new URL(`file:///${claimsPath.replace(/\\/g, '/')}`).href;
+  const { claims } = await import(claimsUrl);
+
+  const expectedKeys = ['timeline', 'cost', 'revenue', 'speed', 'hosting'];
+  const actualKeys = Object.keys(claims).sort();
+  const expected = expectedKeys.sort();
+
+  assert.deepEqual(actualKeys, expected, `claims keys mismatch`);
+
+  assert.strictEqual(
+    claims.timeline,
+    'Typical projects ship in about 15 weeks, depending on scope.',
+    'timeline claim incorrect'
+  );
+  assert.strictEqual(
+    claims.cost,
+    'Around 30% lower cost than traditional agency development.',
+    'cost claim incorrect'
+  );
+  assert.strictEqual(claims.revenue, 'We help clients grow revenue.', 'revenue claim incorrect');
+  assert.strictEqual(claims.speed, 'Faster websites and applications.', 'speed claim incorrect');
+  assert.strictEqual(claims.hosting, 'Lower hosting and production costs.', 'hosting claim incorrect');
+
+  // Verify all are non-empty strings
+  for (const key of expectedKeys) {
+    assert.ok(typeof claims[key] === 'string', `${key} is not a string`);
+    assert.ok(claims[key].length > 0, `${key} is empty`);
+  }
+});
+
 test('every internal link resolves to a built route', () => {
   const seen = new Set();
   const queue = ['/'];
