@@ -4,8 +4,19 @@ import { claims } from "./claims";
 // home page, Services page, contact-form selector and service detail pages all update.
 export type FigureMotif = "compass" | "layers" | "stack" | "gauge" | "cloud" | "network" | "chart" | "shield" | "check";
 
+export type ServiceSlug =
+  | "strategy-discovery"
+  | "design"
+  | "build"
+  | "optimize"
+  | "cloud"
+  | "ai-automation"
+  | "business-systems"
+  | "security"
+  | "quality-support";
+
 export type CapabilityGroup = {
-  slug: string;
+  slug: ServiceSlug;
   name: string;
   summary: string;
   items: string[];

@@ -29,11 +29,13 @@ export default async function CasePage({ params }: Props) {
             <Eyebrow>{p.category}</Eyebrow>
             <h1 className="h-display max-w-2xl text-4xl sm:text-6xl">{p.title}</h1>
             <p className="measure mt-6 text-lg text-slate-300">{p.summary}</p>
-            <ul className="mt-8 flex flex-wrap gap-2" aria-label="Highlights">
-              {p.highlights.map((h) => (
-                <li key={h} className="rounded-full border border-teal/40 px-4 py-1.5 text-sm text-teal">{h}</li>
-              ))}
-            </ul>
+            {p.highlights.length > 0 && (
+              <ul className="mt-8 flex flex-wrap gap-2" aria-label="Highlights">
+                {p.highlights.map((h) => (
+                  <li key={h} className="rounded-full border border-teal/40 px-4 py-1.5 text-sm text-teal">{h}</li>
+                ))}
+              </ul>
+            )}
           </div>
           <aside aria-label="Details" className="self-start rounded-xl border border-line bg-ink-2 p-7">
             <h2 className="text-lg font-semibold">Details</h2>

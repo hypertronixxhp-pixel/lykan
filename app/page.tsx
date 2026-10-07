@@ -4,7 +4,7 @@ import { DocumentFragment, LogisticsFragment, VideoFragment } from "@/components
 import { solutions } from "@/lib/solutions";
 import { PrivacyBlock, TechStack } from "@/components/sections";
 import { WorkPreview } from "@/components/CaseCards";
-import { capabilityGroups } from "@/lib/services";
+import { capabilityGroups, type ServiceSlug } from "@/lib/services";
 import { claims } from "@/lib/claims";
 
 const aiCards = [
@@ -46,7 +46,7 @@ const processRows = [
 ];
 
 /** Secondary claim lines for the capability rows that carry one. */
-const capabilityClaims: Record<string, string> = {
+const capabilityClaims: Partial<Record<ServiceSlug, string>> = {
   optimize: claims.speed,
   cloud: claims.hosting,
   "business-systems": claims.revenue,

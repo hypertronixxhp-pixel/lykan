@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Eyebrow } from "@/components/ui";
 import { ProjectCard } from "@/components/CaseCards";
-import { capabilityGroups } from "@/lib/services";
+import { capabilityGroups, type ServiceSlug } from "@/lib/services";
 import { projects } from "@/lib/work";
 
 export function StandOutGrid({ service, items }: { service: string; items: { title: string; text: string }[] }) {
@@ -45,7 +45,7 @@ export function ExploreServices({ exclude }: { exclude: string }) {
   );
 }
 
-export function RecentWork({ serviceSlug }: { serviceSlug: string }) {
+export function RecentWork({ serviceSlug }: { serviceSlug: ServiceSlug }) {
   const related = projects.filter((p) => p.relatedServices.includes(serviceSlug));
   const shown = (related.length > 0 ? related : projects).slice(0, 2);
   return (

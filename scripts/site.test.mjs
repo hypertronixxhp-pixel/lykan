@@ -356,6 +356,16 @@ test('all six case pages render', async () => {
     for (const chip of p.highlights) {
       assert.ok(text.includes(chip), `${p.slug}: missing highlight chip "${chip}"`);
     }
+    const chipList = main.match(/<ul[^>]*aria-label="Highlights"[^>]*>([\s\S]*?)<\/ul>/);
+    if (p.slug === 'construction-operations') {
+      assert.equal(p.highlights.length, 0, 'construction case must not invent highlight chips');
+      assert.ok(!chipList, 'construction case renders an empty or invented highlights list');
+    } else {
+      assert.equal(p.highlights.length, 3, `${p.slug}: expected three highlight chips`);
+      assert.ok(chipList, `${p.slug}: highlights list not rendered`);
+      assert.equal((chipList[1].match(/<li[\s>]/g) ?? []).length, 3, `${p.slug}: expected three chips rendered`);
+      for (const chip of p.highlights) assert.ok(!/\d/.test(chip), `${p.slug}: chip "${chip}" contains a digit`);
+    }
     const dl = main.match(/<dl[\s>][\s\S]*?<\/dl>/);
     assert.ok(dl, `${p.slug}: no <dl> details panel`);
     const dlText = visibleText(dl[0]);
@@ -381,6 +391,10 @@ test('construction case renders no empty headings', () => {
   const text = visibleText(main);
   assert.ok(!/undefined|null/.test(text), 'page text contains undefined or null');
   assert.ok(text.includes('Project summary'), 'missing Project summary heading');
+  assert.ok(
+    text.includes('Internal tools and workflow automation for a construction business.'),
+    'construction summary should be derived from its scope only',
+  );
   for (const h of ['About the client', 'Challenge', 'Solution', 'Results']) {
     assert.ok(!text.includes(h), `construction case should not show "${h}"`);
   }
