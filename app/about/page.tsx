@@ -1,7 +1,23 @@
 import type { Metadata } from "next";
 import { ClosingCta, Eyebrow } from "@/components/ui";
+import { claims } from "@/lib/claims";
 
 export const metadata: Metadata = { title: "About" };
+
+const principles = [
+  {
+    title: "Your information stays yours",
+    text: "Product plans and operational details belong to the client. We share them only with the people who need them to do the work.",
+  },
+  {
+    title: "Plain, maintainable engineering",
+    text: "We favour clear, well-documented systems your own team can read, run and extend, rather than clever ones only we understand.",
+  },
+  {
+    title: "Honest about scope",
+    text: "We say what is realistic for the problem in front of us, and we flag trade-offs early instead of leaving them for later.",
+  },
+];
 
 export default function About() {
   return (
@@ -15,6 +31,23 @@ export default function About() {
           <div className="mt-10 rounded-xl border border-dashed border-line p-6 text-sm text-slate-400">
             Company and team details will be added here once approved.
           </div>
+        </div>
+      </section>
+      <section className="light-band py-20">
+        <div className="wrap">
+          <Eyebrow tone="light">How we work</Eyebrow>
+          <ol className="space-y-5">
+            {principles.map((p, i) => (
+              <li key={p.title} className="grid gap-3 rounded-xl border border-line-light bg-white p-7 md:grid-cols-[80px_1fr]">
+                <span className="text-2xl font-semibold text-steel">0{i + 1}</span>
+                <div>
+                  <h2 className="text-lg font-semibold">{p.title}</h2>
+                  <p className="mt-1 text-slate-600">{p.text}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+          <p className="mt-8 text-sm text-slate-600">{claims.timeline}</p>
         </div>
       </section>
       <ClosingCta />

@@ -579,3 +579,53 @@ test('home hero shows the pill and sub-line', async () => {
   assert.ok(text.includes('Private engineering partner'), 'hero is missing the pill');
   assert.ok(text.includes(claims.cost), 'hero is missing the cost sub-line');
 });
+
+const contactFaqQuestions = [
+  'How do you estimate a project?',
+  'Do you work with early-stage products?',
+  'How long does a project usually take?',
+  'What does it cost, and is there a minimum?',
+  'Can you take on one part, or work with our in-house team?',
+];
+
+function contactFaqs() {
+  const html = readBuilt('/contact');
+  const details = [...html.matchAll(/<details[\s>][\s\S]*?<\/details>/g)].map((m) => m[0]);
+  return details.map((d) => ({
+    q: visibleText(extractTag(d, 'summary')).replace(/\s*\+$/, ''),
+    a: visibleText(extractTag(d, 'p')),
+  }));
+}
+
+test('contact shows five FAQs using the claims', async () => {
+  const { claims } = await import('../lib/claims.ts');
+  const faqs = contactFaqs();
+  assert.equal(faqs.length, 5, `expected 5 FAQs on /contact, got ${faqs.length}`);
+  const long = faqs.find((f) => f.q.startsWith('How long'));
+  assert.ok(long?.a.includes(claims.timeline), 'timeline answer is missing the timeline claim');
+  const cost = faqs.find((f) => f.q.startsWith('What does it cost'));
+  assert.ok(cost?.a.includes(claims.cost), 'cost answer is missing the cost claim');
+  const rest = faqs.map((f) => f.a).join(' ').replace(claims.timeline, '').replace(claims.cost, '');
+  assert.ok(!/\d/.test(rest), `FAQ answers contain digits outside the claims: ${rest.match(/\S*\d\S*/g)}`);
+});
+
+test('contact FAQ questions are exactly the five approved', () => {
+  assert.deepEqual(contactFaqs().map((f) => f.q), contactFaqQuestions);
+});
+
+test('about has the principle rows and no team or stats section', async () => {
+  const { claims } = await import('../lib/claims.ts');
+  const main = extractTag(readBuilt('/about'), 'main');
+  const text = visibleText(main);
+  for (const title of ['Your information stays yours', 'Plain, maintainable engineering', 'Honest about scope']) {
+    assert.ok(text.includes(title), `about is missing principle "${title}"`);
+  }
+  assert.ok(text.includes(claims.timeline), 'about is missing the timeline claim');
+  const headings = [...main.matchAll(/<h[1-6][^>]*>([\s\S]*?)<\/h[1-6]>/g)].map((m) => visibleText(m[1]));
+  // The shared closing CTA heading ("...what your team needs to build.") legitimately says "team".
+  const teamHeadings = headings.filter((h) => /team/i.test(h) && !h.startsWith('Tell us what your team needs'));
+  assert.deepEqual(teamHeadings, [], 'about has a team heading');
+  for (const phrase of ['years of', 'clients served', 'projects delivered']) {
+    assert.ok(!text.toLowerCase().includes(phrase), `about contains "${phrase}"`);
+  }
+});
