@@ -1,3 +1,12 @@
 import type { NextConfig } from "next";
-const nextConfig: NextConfig = { poweredByHeader: false };
+
+// GitHub Pages build (set by .github/workflows/pages.yml): a fully static export served under /<repo>/.
+// The normal build is unchanged and keeps the /api/contact route.
+const pages = process.env.GITHUB_PAGES === "true";
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH || undefined;
+
+const nextConfig: NextConfig = {
+  poweredByHeader: false,
+  ...(pages ? { output: "export", trailingSlash: true, basePath, images: { unoptimized: true } } : {}),
+};
 export default nextConfig;

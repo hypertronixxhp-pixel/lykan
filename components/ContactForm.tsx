@@ -3,6 +3,19 @@ import { useState } from "react";
 
 type State = "idle" | "sending" | "success" | "error";
 
+// Where submissions go. Unset = this site's own /api/contact route. The static GitHub Pages build sets
+// NEXT_PUBLIC_CONTACT_ENDPOINT to an external form URL, or to "" when none is configured (preview mode).
+const ENDPOINT = process.env.NEXT_PUBLIC_CONTACT_ENDPOINT ?? "/api/contact";
+const CONNECTED = ENDPOINT !== "";
+
+function validate(d: Record<string, FormDataEntryValue>) {
+  const e: Record<string, string[]> = {};
+  if (!String(d.name ?? "").trim()) e.name = ["Please enter your name"];
+  if (!/^\S+@\S+\.\S+$/.test(String(d.email ?? "").trim())) e.email = ["Please enter a valid email address"];
+  if (String(d.message ?? "").trim().length < 10) e.message = ["Please share a little more detail"];
+  return e;
+}
+
 export default function ContactForm({ topics }: { topics: string[] }) {
   const [state, setState] = useState<State>("idle");
   const [errors, setErrors] = useState<Record<string, string[]>>({});
@@ -12,9 +25,15 @@ export default function ContactForm({ topics }: { topics: string[] }) {
     const form = e.currentTarget;
     setState("sending"); setErrors({});
     const data = Object.fromEntries(new FormData(form));
+    const problems = validate(data);
+    if (Object.keys(problems).length) { setErrors(problems); setState("idle"); return; }
     try {
-      const res = await fetch("/api/contact", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
-      if (res.status === 422) { setErrors((await res.json()).errors ?? {}); setState("idle"); return; }
+      const res = await fetch(ENDPOINT, { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify(data) });
+      if (res.status === 422) {
+        const fieldErrors = (await res.json().catch(() => null))?.errors;
+        if (fieldErrors && !Array.isArray(fieldErrors)) { setErrors(fieldErrors); setState("idle"); return; }
+        throw new Error();
+      }
       if (!res.ok) throw new Error();
       form.reset(); setState("success");
     } catch { setState("error"); }
@@ -50,7 +69,8 @@ export default function ContactForm({ topics }: { topics: string[] }) {
       </div>
       <input name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="hidden" />
       {state === "error" && <p role="alert" className="text-sm text-red-300">Something went wrong sending your message. Please try again shortly.</p>}
-      <button disabled={state === "sending"} className="rounded-md bg-teal px-6 py-3 font-medium text-ink disabled:opacity-60">{state === "sending" ? "Sending…" : "Start a private conversation"}</button>
+      {!CONNECTED && <p role="note" className="text-sm text-slate-400">This preview is not connected to a mailbox yet, so messages cannot be sent from here.</p>}
+      <button disabled={state === "sending" || !CONNECTED} className="rounded-md bg-teal px-6 py-3 font-medium text-ink disabled:opacity-60">{state === "sending" ? "Sending…" : "Start a private conversation"}</button>
     </form>
   );
 }

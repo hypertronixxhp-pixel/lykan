@@ -1,0 +1,52 @@
+name: Deploy to GitHub Pages
+
+# Publishes a static export of the site. In the repo: Settings > Pages > Source = "GitHub Actions".
+# Optional repo variable CONTACT_ENDPOINT (Settings > Secrets and variables > Actions > Variables):
+# an external form URL the contact form posts to. Unset = the preview form shows a "not connected" notice.
+# The github-pages environment only deploys from branches it allows (default: the default branch); either
+# merge to main or add this branch under Settings > Environments > github-pages > Deployment branches.
+on:
+  push:
+    branches: [main, redesign]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_PAGES: "true"
+      NEXT_PUBLIC_BASE_PATH: /${{ github.event.repository.name }}
+      NEXT_PUBLIC_SITE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
+      NEXT_PUBLIC_CONTACT_ENDPOINT: ${{ vars.CONTACT_ENDPOINT }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # A static export cannot contain a server route; the form posts to CONTACT_ENDPOINT instead.
+      - run: rm -rf app/api
+      - run: npm run build
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: out
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

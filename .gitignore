@@ -9,3 +9,6 @@ scripts/banned-terms.local.txt
 
 # planning docs stay local only
 docs/superpowers/
+
+# GitHub Pages static export output
+out/
