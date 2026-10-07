@@ -51,7 +51,7 @@ export default function Services() {
                 </div>
                 <div className="flex flex-col justify-between gap-4">
                   <ul className="grid gap-2 text-slate-200 sm:grid-cols-2">
-                    {g.items.slice(0, 4).map((i) => <li key={i} className="flex gap-2 text-sm"><span className="text-teal">▸</span>{i}</li>)}
+                    {g.items.slice(0, 6).map((i) => <li key={i} className="flex gap-2 text-sm"><span className="text-teal">▸</span>{i}</li>)}
                   </ul>
                   <p className="text-sm font-semibold text-teal">Explore {g.name} <span aria-hidden="true" className="inline-block transition-transform group-hover:translate-x-1">→</span></p>
                 </div>

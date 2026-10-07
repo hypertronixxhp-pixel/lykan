@@ -231,7 +231,7 @@ test('contact page lists 9 service options', () => {
 });
 
 test('service detail pages list the new SEO, speed and hosting items', () => {
-  // The /services index shows only the first four items per group and links to the detail pages, which carry the full lists.
+  // The /services index shows only the first six items per group and links to the detail pages, which carry the full lists.
   const html = serviceSlugs.map((slug) => readBuilt(`/services/${slug}`)).join('\n');
   const expected = [
     'SEO optimization (technical SEO, content structure, search visibility)',
@@ -418,11 +418,26 @@ test('services index links each group to its detail page and shows the AI-by-tea
     assert.ok(anchor, `no anchor element for /services/${slug} inside <main>`);
     const text = visibleText(anchor[1]);
     const figure = String(i + 1).padStart(2, '0');
-    assert.ok(text.includes(figure), `row for ${slug} is missing figure number ${figure}`);
+    assert.ok(text.startsWith(figure), `row for ${slug} should lead with figure number ${figure}, got "${text.slice(0, 20)}"`);
     assert.ok(text.includes('Explore'), `row for ${slug} is missing the Explore affordance`);
   });
   const text = visibleText(main);
   for (const heading of ['Everything we do', 'AI for every team', 'Automation tailored to how each team works', 'Tech stack', 'Ways to start']) {
     assert.ok(text.includes(heading), `services index is missing "${heading}"`);
   }
+});
+
+test('services index shows the SEO, speed, hosting and revenue-growth items', () => {
+  const text = visibleText(extractTag(readBuilt('/services'), 'main'));
+  const expected = [
+    'SEO optimization (technical SEO, content structure, search visibility)',
+    'Website speed and Core Web Vitals',
+    'Hosting and production cost reduction',
+    'Right-sizing infrastructure to cut hosting and production costs',
+    'Conversion and revenue growth support',
+  ];
+  for (const item of expected) {
+    assert.ok(text.includes(item), `services index is missing "${item}"`);
+  }
+  assert.ok(!text.includes('Infrastructure cost review'), 'services index still lists "Infrastructure cost review"');
 });

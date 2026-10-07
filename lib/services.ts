@@ -161,11 +161,11 @@ export const capabilityGroups: CapabilityGroup[] = [
     items: [
       "Database optimization: query tuning, indexing, schema review",
       "API optimization: latency, caching, and payload size",
-      "Application and front-end performance",
-      "Website speed and Core Web Vitals",
       "SEO optimization (technical SEO, content structure, search visibility)",
-      "Server tuning and resource planning",
+      "Website speed and Core Web Vitals",
       "Hosting and production cost reduction",
+      "Application and front-end performance",
+      "Server tuning and resource planning",
       "Code review and refactoring",
     ],
     standOut: [
