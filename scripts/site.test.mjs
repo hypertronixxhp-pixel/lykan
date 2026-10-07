@@ -244,3 +244,42 @@ test('services page lists the new SEO, speed and hosting items', () => {
   }
   assert.ok(!html.includes('Infrastructure cost review'), 'services page still lists "Infrastructure cost review"');
 });
+
+/** Visible text of each <article> on a built page (tags stripped, entities decoded). */
+function articleTexts(html) {
+  return [...html.matchAll(/<article[^>]*>([\s\S]*?)<\/article>/g)].map((m) =>
+    m[1]
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&#x27;|&apos;/g, "'")
+      .replace(/&quot;/g, '"')
+      .replace(/&amp;/g, '&')
+      .replace(/\s+/g, ' ')
+      .trim(),
+  );
+}
+
+test('case cards and case pages are qualitative', () => {
+  const cards = articleTexts(readBuilt('/work'));
+  assert.equal(cards.length, 6, `expected 6 case cards on /work, got ${cards.length}`);
+  for (const text of cards) {
+    assert.ok(!/\d/.test(text), `case card contains a digit: "${text}"`);
+  }
+});
+
+test('work page shows the six case titles and scope pills', () => {
+  const html = readBuilt('/work');
+  const titles = [
+    'Property portal',
+    'Holiday-rental booking platform',
+    'Rental marketplace with back office',
+    'Investment platform flagship',
+    'Design studio portfolio',
+    'Construction operations software',
+  ];
+  for (const title of titles) {
+    assert.ok(html.includes(title), `/work is missing case title "${title}"`);
+  }
+  for (const pill of ['Branding', 'Web design', 'ERP', 'System integration', 'Workflow automation', 'Internal tools']) {
+    assert.ok(html.includes(`>${pill}</li>`), `/work is missing scope pill "${pill}"`);
+  }
+});

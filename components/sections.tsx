@@ -67,7 +67,7 @@ export function ProjectCard({ p }: { p: Project }) {
       <h3 className="mt-2 text-xl font-semibold">{p.title}</h3>
       <p className="mt-2 text-slate-300">{p.summary}</p>
       <ul className="mt-5 flex flex-wrap gap-2 border-t border-line pt-4" aria-label="Services provided">
-        {p.services.map((s) => <li key={s} className="rounded-full border border-line px-3 py-1 text-xs text-slate-300">{s}</li>)}
+        {p.scope.map((s) => <li key={s} className="rounded-full border border-line px-3 py-1 text-xs text-slate-300">{s}</li>)}
       </ul>
     </article>
   );
@@ -83,7 +83,7 @@ export function WorkPreview() {
         <h2 className="h-display max-w-2xl text-3xl sm:text-4xl">Projects we have delivered, described discreetly</h2>
         <p className="measure mt-4 text-slate-300">{WORK_NOTE}</p>
         <div className="mt-12 grid gap-6 md:grid-cols-3">
-          {projects.slice(0, 3).map((p) => <ProjectCard key={p.title} p={p} />)}
+          {projects.slice(0, 3).map((p) => <ProjectCard key={p.slug} p={p} />)}
         </div>
         <Button href="/work" variant="ghost" className="mt-8">See all work</Button>
       </div>
