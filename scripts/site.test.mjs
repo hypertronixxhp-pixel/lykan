@@ -111,12 +111,23 @@ test('banned terms never appear in built output', () => {
   assert.deepEqual(hits, [], `Banned terms found in built output:\n${hits.join('\n')}`);
 });
 
+test('30% boundary regex matches claim context but not CSS arbitrary values', () => {
+  const re = /(?<![\[\d.])30%(?![\]\d])/;
+  // Should match: claim contexts
+  assert.ok(re.test('save 30% today'), 'matches "save 30% today"');
+  assert.ok(re.test('up to 30% faster'), 'matches "up to 30% faster"');
+  assert.ok(re.test('30%.'), 'matches "30%." with trailing period');
+  // Should NOT match: CSS arbitrary values and numeric contexts
+  assert.ok(!re.test('left-[30%]'), 'does not match CSS arbitrary value "left-[30%]"');
+  assert.ok(!re.test('w-[130%]'), 'does not match larger percentage "w-[130%]"');
+  assert.ok(!re.test('130%'), 'does not match digit-prefixed "130%"');
+  assert.ok(!re.test('30.5%'), 'does not match decimal "30.5%"');
+});
+
 test('claim numbers exist only in lib/claims.ts', () => {
-  // Look for claim phrases, not just numbers (avoids matching CSS values like left-[30%])
-  const claimPhrases = [
-    '15 weeks',
-    '30% lower',  // More specific than just "30%" to avoid CSS false positives
-  ];
+  // Check for "15 weeks" as literal substring and "30%" with boundary regex
+  // (regex prevents false positives from CSS values like left-[30%])
+  const thirtyPercentRegex = /(?<![\[\d.])30%(?![\]\d])/;
   const dirs = ['app', 'components', 'lib'];
   const hits = [];
 
@@ -133,10 +144,12 @@ test('claim numbers exist only in lib/claims.ts', () => {
           walk(full, rel);
         } else if (entry.isFile() && (entry.name.endsWith('.ts') || entry.name.endsWith('.tsx') || entry.name.endsWith('.js') || entry.name.endsWith('.jsx'))) {
           const content = fs.readFileSync(full, 'utf8');
-          for (const phrase of claimPhrases) {
-            if (content.includes(phrase)) {
-              hits.push(`${rel}: contains "${phrase}"`);
-            }
+
+          if (content.includes('15 weeks')) {
+            hits.push(`${rel}: contains "15 weeks"`);
+          }
+          if (thirtyPercentRegex.test(content)) {
+            hits.push(`${rel}: contains "30%" (outside CSS arbitrary values)`);
           }
         }
       }
@@ -149,7 +162,7 @@ test('claim numbers exist only in lib/claims.ts', () => {
     walk(path.join(root, dir), dir);
   }
 
-  assert.deepEqual(hits, [], `Claim phrases found outside lib/claims.ts:\n${hits.join('\n')}`);
+  assert.deepEqual(hits, [], `Claim numbers found outside lib/claims.ts:\n${hits.join('\n')}`);
 });
 
 test('claims module exports the five claim strings', async () => {
