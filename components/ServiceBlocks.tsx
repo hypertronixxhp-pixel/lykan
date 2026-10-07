@@ -8,7 +8,7 @@ export function StandOutGrid({ service, items }: { service: string; items: { tit
   return (
     <section className="py-20">
       <div className="wrap">
-        <h2 className="h-display max-w-2xl text-3xl sm:text-4xl">What makes our {service} stand out</h2>
+        <h2 className="h-display max-w-2xl text-3xl sm:text-4xl">{`What makes our ${service} stand out`}</h2>
         <div className="mt-10 grid gap-5 sm:grid-cols-2">
           {items.slice(0, 4).map((i) => (
             <article key={i.title} className="rounded-xl border border-line bg-ink-2 p-6">

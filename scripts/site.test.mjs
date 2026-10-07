@@ -245,17 +245,23 @@ test('services page lists the new SEO, speed and hosting items', () => {
   assert.ok(!html.includes('Infrastructure cost review'), 'services page still lists "Infrastructure cost review"');
 });
 
-/** Visible text of each <article> on a built page (tags stripped, entities decoded). */
+/** Visible text of an html fragment: comments and tags stripped, basic entities decoded, whitespace collapsed. */
+function visibleText(fragment) {
+  return fragment
+    .replace(/<!--[\s\S]*?-->/g, '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&#x27;|&#39;|&apos;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/** Visible text of each <article> on a built page. */
 function articleTexts(html) {
-  return [...html.matchAll(/<article[^>]*>([\s\S]*?)<\/article>/g)].map((m) =>
-    m[1]
-      .replace(/<[^>]+>/g, ' ')
-      .replace(/&#x27;|&apos;/g, "'")
-      .replace(/&quot;/g, '"')
-      .replace(/&amp;/g, '&')
-      .replace(/\s+/g, ' ')
-      .trim(),
-  );
+  return [...html.matchAll(/<article[^>]*>([\s\S]*?)<\/article>/g)].map((m) => visibleText(m[1]));
 }
 
 test('case cards and case pages are qualitative', () => {
@@ -293,4 +299,68 @@ test('home page still renders work preview and tech stack', () => {
 test('work page still renders six case cards after the move', () => {
   const cards = articleTexts(readBuilt('/work'));
   assert.equal(cards.length, 6, `expected 6 case cards on /work, got ${cards.length}`);
+});
+
+const serviceSlugs = [
+  'strategy-discovery',
+  'design',
+  'build',
+  'optimize',
+  'cloud',
+  'ai-automation',
+  'business-systems',
+  'security',
+  'quality-support',
+];
+
+test('all nine service pages render with 4 standOut points, 3 FAQs and the figure caption', () => {
+  serviceSlugs.forEach((slug, i) => {
+    const html = readBuilt(`/services/${slug}`);
+    assert.ok(/<h1[\s>]/.test(html), `${slug}: missing h1`);
+    const section = html.match(/<section[^>]*>(?:(?!<\/section>)[\s\S])*?What makes our(?:(?!<\/section>)[\s\S])*<\/section>/);
+    assert.ok(section, `${slug}: missing stand-out section`);
+    const cards = (section[0].match(/<article[\s>]/g) ?? []).length;
+    assert.equal(cards, 4, `${slug}: expected 4 stand-out cards, got ${cards}`);
+    const faqs = (html.match(/<details[\s>]/g) ?? []).length;
+    assert.equal(faqs, 3, `${slug}: expected 3 FAQs, got ${faqs}`);
+    const caption = `FIG. 0${i + 1}`;
+    assert.ok(visibleText(html).includes(caption), `${slug}: missing figure caption "${caption}"`);
+  });
+});
+
+test('unknown service slug does not build', () => {
+  assert.ok(!fs.existsSync(path.join(appDir, 'services', 'nope.html')), 'services/nope.html was built');
+  assert.ok(builtPath('/services/design'), 'expected at least one real service page to be built');
+});
+
+test('stand-out heading is a single text node', () => {
+  const html = readBuilt('/services/design');
+  assert.ok(!html.includes('What makes our <!-- -->'), 'stand-out heading still has split text nodes');
+  assert.ok(visibleText(html).includes('What makes our design stand out'));
+  for (const slug of serviceSlugs) {
+    assert.ok(!readBuilt(`/services/${slug}`).includes('<!-- -->'), `${slug}: page has split text nodes`);
+  }
+});
+
+test('optimize page shows the speed claim and SEO item', async () => {
+  const { claims } = await import('../lib/claims.ts');
+  const text = visibleText(readBuilt('/services/optimize'));
+  assert.ok(text.includes(claims.speed), 'optimize page is missing the speed claim');
+  assert.ok(
+    text.includes('SEO optimization (technical SEO, content structure, search visibility)'),
+    'optimize page is missing the SEO item',
+  );
+});
+
+test('cloud page shows the hosting claim', async () => {
+  const { claims } = await import('../lib/claims.ts');
+  assert.ok(visibleText(readBuilt('/services/cloud')).includes(claims.hosting), 'cloud page is missing the hosting claim');
+});
+
+test('business-systems page shows the revenue claim', async () => {
+  const { claims } = await import('../lib/claims.ts');
+  assert.ok(
+    visibleText(readBuilt('/services/business-systems')).includes(claims.revenue),
+    'business-systems page is missing the revenue claim',
+  );
 });
