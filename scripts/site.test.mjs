@@ -536,13 +536,19 @@ test('footer contains the grouped columns', () => {
   for (const slug of ['logistics-control-platform', 'procurement-intelligence-workspace', 'media-operations-hub']) {
     assert.ok(footer.includes(`href="/solutions/${slug}"`), `footer is missing a link to /solutions/${slug}`);
   }
-  for (const href of ['/about', '/work', '/contact']) {
+  for (const href of ['/about', '/approach', '/work', '/contact', '/services']) {
     assert.ok(footer.includes(`href="${href}"`), `footer is missing a link to ${href}`);
   }
   const text = visibleText(footer);
   for (const heading of ['Company', 'Services', 'Solutions', 'Connect']) {
     assert.ok(text.includes(heading), `footer is missing the "${heading}" heading`);
   }
+  assert.ok(text.includes('All services'), 'footer is missing the "All services" link');
+  assert.ok(text.includes('Approach'), 'footer is missing the "Approach" link');
+  // The Connect column should not be a single duplicate of the Company column's Contact link.
+  const connect = footer.match(/Connect<\/h2>\s*<ul[^>]*>([\s\S]*?)<\/ul>/);
+  assert.ok(connect, 'footer Connect column not found');
+  assert.ok((connect[1].match(/<li[\s>]/g) ?? []).length >= 2, 'footer Connect column has fewer than two links');
 });
 
 test('services menu button is wired for accessibility', () => {
@@ -771,4 +777,42 @@ test('optimize page uses the speed and hosting claims', async () => {
   const text = visibleText(readBuilt('/services/optimize'));
   assert.ok(text.includes(claims.speed), 'optimize page is missing the speed claim');
   assert.ok(text.includes(claims.hosting), 'optimize page is missing the hosting claim');
+});
+
+test('home bands alternate so light sections never touch', () => {
+  const main = builtTag('/', 'main');
+  const classes = [...main.matchAll(/<section[^>]*class="([^"]*)"/g)].map((m) => m[1]);
+  assert.ok(classes.length >= 8, `expected at least eight home sections, got ${classes.length}`);
+  const light = classes.map((c) => c.split(/\s+/).includes('light-band'));
+  for (let i = 1; i < light.length; i++) {
+    assert.ok(!(light[i] && light[i - 1]), `home sections ${i} and ${i + 1} are both light bands`);
+  }
+  const text = visibleText(main);
+  const order = ['Applied AI', 'Capabilities', 'Projects we have delivered', 'Tech stack', 'Private by default', 'Two ways to work with us', 'Systems shaped around demanding workflows'];
+  let last = -1;
+  for (const marker of order) {
+    const at = text.indexOf(marker);
+    assert.ok(at > last, `home section "${marker}" is missing or out of order`);
+    last = at;
+  }
+});
+
+test('key pages carry their own meta description', () => {
+  const rootDescription = readBuilt('/solutions').match(/<meta name="description" content="([^"]*)"/)?.[1];
+  for (const route of ['/services', '/work', '/about', '/contact']) {
+    const description = readBuilt(route).match(/<meta name="description" content="([^"]*)"/)?.[1];
+    assert.ok(description && description.length > 40, `${route}: missing or too short meta description`);
+    assert.ok(!/\d/.test(description), `${route}: meta description contains a digit`);
+    assert.notEqual(description, rootDescription, `${route}: meta description is just the site default`);
+  }
+});
+
+test('service pages fall back to "Selected work" only when no case is related', async () => {
+  const { projects } = await import('../lib/work.ts');
+  for (const slug of serviceSlugs) {
+    const text = visibleText(builtTag(`/services/${slug}`, 'main'));
+    const related = projects.some((p) => p.relatedServices.includes(slug));
+    assert.ok(text.includes(related ? 'Recent work' : 'Selected work'), `${slug}: wrong work heading`);
+    assert.ok(!text.includes(related ? 'Selected work' : 'Recent work'), `${slug}: stale work heading`);
+  }
 });

@@ -32,7 +32,8 @@ export default function ServicesMenu() {
         }
       }}
       onBlur={(e) => {
-        if (open && !root.current?.contains(e.relatedTarget as Node | null)) setOpen(false);
+        // relatedTarget is null when the click lands on non-focusable panel padding; outside clicks are handled by the pointerdown listener.
+        if (open && e.relatedTarget && !root.current?.contains(e.relatedTarget as Node)) setOpen(false);
       }}
     >
       <button

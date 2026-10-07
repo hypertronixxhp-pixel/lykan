@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import { ClosingCta, Eyebrow } from "@/components/ui";
 import { claims } from "@/lib/claims";
 
-export const metadata: Metadata = { title: "About" };
+export const metadata: Metadata = {
+  title: "About",
+  description: "Lykan Cloud & AI Services is a private engineering partner that designs and builds web applications, cloud platforms and AI-powered workflows.",
+};
 
 const principles = [
   {

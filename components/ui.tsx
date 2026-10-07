@@ -1,12 +1,11 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-export function Button({ href, children, variant = "primary", className = "" }: { href: string; children: ReactNode; variant?: "primary" | "ghost" | "ghostLight"; className?: string }) {
+export function Button({ href, children, variant = "primary", className = "" }: { href: string; children: ReactNode; variant?: "primary" | "ghost"; className?: string }) {
   const base = "inline-flex items-center justify-center rounded-md px-5 py-3 text-sm font-medium transition-colors";
   const styles = {
     primary: "bg-teal text-ink hover:bg-[#5fd6d3]",
     ghost: "border border-white/20 text-white hover:border-teal hover:text-teal",
-    ghostLight: "border border-[#172235]/25 text-text hover:border-[#0b1220] hover:bg-white",
   }[variant];
   return <Link href={href} className={`${base} ${styles} ${className}`}>{children}</Link>;
 }

@@ -3,7 +3,10 @@ import { ClosingCta, Eyebrow } from "@/components/ui";
 import { CaseGrid, WORK_NOTE } from "@/components/CaseCards";
 import { projects } from "@/lib/work";
 
-export const metadata: Metadata = { title: "Work" };
+export const metadata: Metadata = {
+  title: "Work",
+  description: "The kinds of products we have built, described by type and scope, with client details kept confidential.",
+};
 
 export default function Work() {
   return (

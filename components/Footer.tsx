@@ -4,10 +4,10 @@ import { capabilityGroups } from "@/lib/services";
 import { solutions } from "@/lib/solutions";
 
 const columns: { heading: string; links: [label: string, href: string][] }[] = [
-  { heading: "Company", links: [["About", "/about"], ["Work", "/work"], ["Contact", "/contact"]] },
-  { heading: "Services", links: capabilityGroups.map((g) => [g.name, `/services/${g.slug}`]) },
+  { heading: "Company", links: [["About", "/about"], ["Approach", "/approach"], ["Work", "/work"], ["Contact", "/contact"]] },
+  { heading: "Services", links: [...capabilityGroups.map((g): [string, string] => [g.name, `/services/${g.slug}`]), ["All services", "/services"]] },
   { heading: "Solutions", links: solutions.map((s) => [s.name, `/solutions/${s.slug}`]) },
-  { heading: "Connect", links: [["Contact Lykan", "/contact"]] },
+  { heading: "Connect", links: [["Discuss a project", "/contact"], ["See what we build", "/solutions"]] },
 ];
 
 export default function Footer() {
@@ -24,7 +24,7 @@ export default function Footer() {
               <h2 className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-300">{c.heading}</h2>
               <ul className="mt-4 space-y-2">
                 {c.links.map(([l, h]) => (
-                  <li key={`${c.heading}-${h}`}><Link href={h} className="hover:text-white">{l}</Link></li>
+                  <li key={`${c.heading}-${l}`}><Link href={h} className="hover:text-white">{l}</Link></li>
                 ))}
               </ul>
             </div>

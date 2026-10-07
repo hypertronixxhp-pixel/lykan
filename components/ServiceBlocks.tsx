@@ -48,11 +48,12 @@ export function ExploreServices({ exclude }: { exclude: string }) {
 export function RecentWork({ serviceSlug }: { serviceSlug: ServiceSlug }) {
   const related = projects.filter((p) => p.relatedServices.includes(serviceSlug));
   const shown = (related.length > 0 ? related : projects).slice(0, 2);
+  const heading = related.length > 0 ? "Recent work" : "Selected work";
   return (
     <section className="py-20">
       <div className="wrap">
         <Eyebrow>Work</Eyebrow>
-        <h2 className="h-display max-w-2xl text-3xl sm:text-4xl">Recent work</h2>
+        <h2 className="h-display max-w-2xl text-3xl sm:text-4xl">{heading}</h2>
         <div className="mt-10 grid gap-6 md:grid-cols-2">
           {shown.map((p) => <ProjectCard key={p.slug} p={p} />)}
         </div>

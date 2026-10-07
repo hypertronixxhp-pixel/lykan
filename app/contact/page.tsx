@@ -5,7 +5,10 @@ import { Eyebrow } from "@/components/ui";
 import { NDA_LINE } from "@/components/sections";
 import { claims } from "@/lib/claims";
 
-export const metadata: Metadata = { title: "Contact" };
+export const metadata: Metadata = {
+  title: "Contact",
+  description: "Tell us what your team needs to build, at a level of detail you are comfortable with, and we can talk it through directly.",
+};
 
 const faqs = [
   {

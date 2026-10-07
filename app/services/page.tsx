@@ -4,7 +4,10 @@ import { ClosingCta, Eyebrow } from "@/components/ui";
 import { AiByTeam, PrivacyBlock, TechStack, WaysToStart, WorkTypes } from "@/components/sections";
 import { capabilityGroups } from "@/lib/services";
 
-export const metadata: Metadata = { title: "Services" };
+export const metadata: Metadata = {
+  title: "Services",
+  description: "Product design, engineering, cloud, applied AI and ongoing support from one delivery team, shaped around the problem you need to solve.",
+};
 
 const rows = [
   ["A new digital product", "Product and web application engineering", "Customer portal, marketplace, internal platform"],

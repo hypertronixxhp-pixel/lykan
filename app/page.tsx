@@ -148,6 +148,10 @@ export default function Home() {
 
       <WorkPreview />
 
+      <TechStack />
+
+      <PrivacyBlock />
+
       <section className="light-band py-24">
         <div className="wrap">
           <Eyebrow tone="light">How we engage</Eyebrow>
@@ -165,10 +169,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      <TechStack />
-
-      <PrivacyBlock />
 
       <section className="py-24">
         <div className="wrap">
