@@ -2,10 +2,12 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const appDir = path.join(root, '.next', 'server', 'app');
+const staticDir = path.join(root, '.next', 'static');
 const bannedFile = path.join(root, 'scripts', 'banned-terms.local.txt');
 
 /** Map a route ("/", "/about", "/solutions/x") to its built html file path. */
@@ -64,7 +66,12 @@ const thirtyPercentRegex = /(?<![\[\d.])30%(?![\]\d])/;
 
 /** Case-insensitive matcher for a banned term: not inside a longer word/number, but a trailing full stop is allowed. */
 export function bannedTermRegExp(term) {
-  return new RegExp(`(?<![\\w.])${escapeRegExp(term)}(?!\\w|\\.\\w)`, 'i');
+  // A leading letter is only blocked by another word character, so "www.<term>.com" and "sub.<term>.com" are caught.
+  // A leading digit/symbol is also blocked by a dot, so a numeric term is not matched inside a longer number.
+  // After the term: not a longer word, and not a dot-word ("term.baz") unless the dot-word is a common top-level domain ("term.com").
+  const after = '(?!\\w|\\.(?!(?:com|net|org|io|co|ai|app|dev|info|biz)\\b)\\w)';
+  const before = /^[a-z]/i.test(term) ? '(?<!\\w)' : '(?<![\\w.])';
+  return new RegExp(`${before}${escapeRegExp(term)}${after}`, 'i');
 }
 
 test('banned-term matcher boundaries', () => {
@@ -80,6 +87,15 @@ test('banned-term matcher boundaries', () => {
   assert.ok(!num.test('rated 17.25 overall'), 'numeric term inside a larger number');
   assert.ok(num.test('rated 7.25 overall'), 'standalone numeric term');
   assert.ok(num.test('rated 7.25.'), 'standalone numeric term before full stop');
+  // Neutral fake term for the host-name cases: a leading letter must be caught after a dot (www.x / sub.x).
+  const host = bannedTermRegExp('foo-bar');
+  assert.ok(host.test('visit www.foo-bar.com today'), 'term inside www.<term>.com');
+  assert.ok(host.test('"url":"https://sub.foo-bar.com/x"'), 'term inside a subdomain host name');
+  assert.ok(host.test('visit foo-bar.com today'), 'term as the bare host name');
+  assert.ok(!host.test('foo-barn'), 'term inside a longer word (suffix)');
+  assert.ok(!host.test('afoo-bar'), 'term inside a longer word (prefix)');
+  assert.ok(!host.test('foo-bar.baz'), 'term followed by a non-TLD dot-word');
+  assert.ok(!host.test('foo-bar.company'), 'term followed by a dot-word that merely starts like a TLD');
 });
 
 test('home page builds', () => {
@@ -88,7 +104,44 @@ test('home page builds', () => {
   assert.ok(html.length > 1000, 'home page html suspiciously small');
 });
 
-test('banned terms never appear in built output', () => {
+/** Next.js ships a fixed crawler user-agent regex literal in its own runtime chunk; it is framework text, not site copy, and can collide with common words. */
+function stripFrameworkNoise(text) {
+  return text.replace(/\/\[\\w-\]\+-Google\|[^/]*?googleweblight\/i/g, '');
+}
+
+/** Every .js file under .next/static (client chunks), with its full text. */
+export function allClientChunks() {
+  assert.ok(fs.existsSync(staticDir), `Build output missing at ${staticDir} (run npm run build first)`);
+  const out = [];
+  const walk = (dir) => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else if (entry.name.endsWith('.js')) {
+        out.push({ file: `.next/static/${path.relative(staticDir, full).replaceAll('\\', '/')}`, text: stripFrameworkNoise(fs.readFileSync(full, 'utf8')) });
+      }
+    }
+  };
+  walk(staticDir);
+  return out;
+}
+
+/** Every tracked text file (git ls-files), skipping the lockfile and anything binary. */
+export function trackedTextFiles() {
+  const listed = execFileSync('git', ['ls-files', '-z'], { cwd: root, encoding: 'utf8' }).split('\0').filter(Boolean);
+  const out = [];
+  for (const rel of listed) {
+    if (rel === 'package-lock.json') continue;
+    const full = path.join(root, rel);
+    if (!fs.existsSync(full)) continue; // deleted in the working tree but not yet committed
+    const buf = fs.readFileSync(full);
+    if (buf.includes(0)) continue; // binary
+    out.push({ file: rel, text: buf.toString('utf8') });
+  }
+  return out;
+}
+
+test('banned terms never appear in built output, client chunks or tracked files', () => {
   assert.ok(
     fs.existsSync(bannedFile),
     'scripts/banned-terms.local.txt is missing; the privacy scan cannot run. Restore it (one term per line, gitignored).',
@@ -103,15 +156,23 @@ test('banned terms never appear in built output', () => {
     index: i + 1,
     re: bannedTermRegExp(term),
   }));
-  const files = allBuiltHtml();
-  assert.ok(files.length > 0, 'no built html files found; run npm run build first');
+  const sets = {
+    'built html (.next/server/app)': allBuiltHtml(),
+    'client chunks (.next/static)': allClientChunks(),
+    'tracked files (git ls-files)': trackedTextFiles(),
+  };
+  for (const [name, files] of Object.entries(sets)) {
+    assert.ok(files.length > 0, `the privacy scan found no files in ${name}; run npm run build first / check git`);
+  }
   const hits = [];
-  for (const { file, text } of files) {
-    for (const { index, re } of patterns) {
-      if (re.test(text)) hits.push(`${file}: banned term #${index} in banned-terms.local.txt (non-blank entries, 1-based)`);
+  for (const [name, files] of Object.entries(sets)) {
+    for (const { file, text } of files) {
+      for (const { index, re } of patterns) {
+        if (re.test(text)) hits.push(`${file}: banned term #${index} in banned-terms.local.txt (non-blank entries, 1-based) [${name}]`);
+      }
     }
   }
-  assert.deepEqual(hits, [], `Banned terms found in built output:\n${hits.join('\n')}`);
+  assert.deepEqual(hits, [], `Banned terms found:\n${hits.join('\n')}`);
 });
 
 test('30% boundary regex matches claim context but not CSS arbitrary values', () => {
@@ -131,31 +192,25 @@ test('claim numbers exist only in lib/claims.ts', () => {
   // (regex prevents false positives from CSS values like left-[30%])
   const dirs = ['app', 'components', 'lib'];
   const hits = [];
+  let scanned = 0;
 
   function walk(dir, dirName = '') {
-    try {
-      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-        const full = path.join(dir, entry.name);
-        const rel = dirName ? `${dirName}/${entry.name}` : entry.name;
+    assert.ok(fs.existsSync(dir), `expected source directory "${dirName}" to exist`);
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      const rel = dirName ? `${dirName}/${entry.name}` : entry.name;
 
-        // Skip lib/claims.ts
-        if (rel === 'lib/claims.ts') continue;
+      // Skip lib/claims.ts
+      if (rel === 'lib/claims.ts') continue;
 
-        if (entry.isDirectory()) {
-          walk(full, rel);
-        } else if (entry.isFile() && (entry.name.endsWith('.ts') || entry.name.endsWith('.tsx') || entry.name.endsWith('.js') || entry.name.endsWith('.jsx'))) {
-          const content = fs.readFileSync(full, 'utf8');
-
-          if (content.includes('15 weeks')) {
-            hits.push(`${rel}: contains "15 weeks"`);
-          }
-          if (thirtyPercentRegex.test(content)) {
-            hits.push(`${rel}: contains "30%" (outside CSS arbitrary values)`);
-          }
-        }
+      if (entry.isDirectory()) {
+        walk(full, rel);
+      } else if (entry.isFile() && /\.(ts|tsx|js|jsx)$/.test(entry.name)) {
+        scanned++;
+        const content = fs.readFileSync(full, 'utf8');
+        if (content.includes('15 weeks')) hits.push(`${rel}: contains "15 weeks"`);
+        if (thirtyPercentRegex.test(content)) hits.push(`${rel}: contains "30%" (outside CSS arbitrary values)`);
       }
-    } catch (e) {
-      // Directory might not exist, that's ok
     }
   }
 
@@ -163,6 +218,7 @@ test('claim numbers exist only in lib/claims.ts', () => {
     walk(path.join(root, dir), dir);
   }
 
+  assert.ok(scanned > 0, 'claim-number scan read no source files');
   assert.deepEqual(hits, [], `Claim numbers found outside lib/claims.ts:\n${hits.join('\n')}`);
 });
 
@@ -273,7 +329,7 @@ test('case cards and case pages are qualitative', async () => {
     assert.ok(!/\d/.test(text), `case card contains a digit: "${text}"`);
   }
   for (const { slug } of projects) {
-    const text = visibleText(extractTag(readBuilt(`/work/${slug}`), 'main'));
+    const text = visibleText(builtTag(`/work/${slug}`, 'main'));
     assert.ok(!/\d/.test(text), `/work/${slug} main text contains a digit`);
   }
 });
@@ -294,7 +350,7 @@ test('all six case pages render', async () => {
     const html = readBuilt(`/work/${p.slug}`);
     const h1s = [...html.matchAll(/<h1[\s>]/g)].length;
     assert.equal(h1s, 1, `${p.slug}: expected exactly one h1, got ${h1s}`);
-    const main = extractTag(html, 'main');
+    const main = extractTag(html, 'main', `route "/work/${p.slug}"`);
     const text = visibleText(main);
     assert.ok(text.includes(p.title), `${p.slug}: missing title`);
     for (const chip of p.highlights) {
@@ -311,17 +367,17 @@ test('all six case pages render', async () => {
 
 test('case pages carry no client, year, duration or link rows', () => {
   for (const slug of caseSlugs) {
-    const main = extractTag(readBuilt(`/work/${slug}`), 'main');
+    const main = builtTag(`/work/${slug}`, 'main');
     const labels = [...main.matchAll(/<dt[^>]*>([\s\S]*?)<\/dt>/g)].map((m) => visibleText(m[1]));
     assert.deepEqual(labels, ['Industry', 'Scope'], `${slug}: unexpected details rows ${labels.join(', ')}`);
   }
 });
 
 test('construction case renders no empty headings', () => {
-  const main = extractTag(readBuilt('/work/construction-operations'), 'main');
+  const main = builtTag('/work/construction-operations', 'main');
   assert.ok(!/<h[23][^>]*>\s*<\/h[23]>/.test(main), 'empty heading element');
   assert.ok(!/<\/h[23]>\s*<h[1-6][\s>]/.test(main), 'heading immediately followed by another heading');
-  assert.ok(!/<\/h[23]>\s*<(\w+)[^>]*>\s*<\/>/.test(main), 'heading followed by an empty element');
+  assert.ok(!/<\/h[23]>\s*<(\w+)[^>]*>\s*<\/\1>/.test(main), 'heading followed by an empty element');
   const text = visibleText(main);
   assert.ok(!/undefined|null/.test(text), 'page text contains undefined or null');
   assert.ok(text.includes('Project summary'), 'missing Project summary heading');
@@ -330,13 +386,24 @@ test('construction case renders no empty headings', () => {
   }
 });
 
+/** The dynamic-route entry for a pattern such as "/work/[slug]" in .next/prerender-manifest.json. */
+function dynamicRouteEntry(pattern) {
+  const manifestPath = path.join(root, '.next', 'prerender-manifest.json');
+  assert.ok(fs.existsSync(manifestPath), 'prerender manifest missing (run npm run build first)');
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+  const entry = manifest.dynamicRoutes?.[pattern];
+  assert.ok(entry, `prerender manifest has no dynamic route "${pattern}"`);
+  return entry;
+}
+
 test('unknown work slug does not build', () => {
   assert.ok(!fs.existsSync(path.join(appDir, 'work', 'nope.html')), 'work/nope.html was built');
   assert.ok(builtPath('/work/property-portal'), 'expected a real case page to be built');
+  assert.equal(dynamicRouteEntry('/work/[slug]').fallback, false, '/work/[slug] must not fall back for unknown slugs');
 });
 
 test('case cards link to their case pages', () => {
-  const main = extractTag(readBuilt('/work'), 'main');
+  const main = builtTag('/work', 'main');
   for (const slug of caseSlugs) {
     const n = main.split(`href="/work/${slug}"`).length - 1;
     assert.equal(n, 1, `/work: expected one link to /work/${slug}, got ${n}`);
@@ -344,7 +411,7 @@ test('case cards link to their case pages', () => {
 });
 
 test('work note wording', () => {
-  const text = visibleText(extractTag(readBuilt('/work'), 'main'));
+  const text = visibleText(builtTag('/work', 'main'));
   assert.ok(text.includes('Client names, locations, and figures are withheld by agreement.'), '/work is missing the work note');
   assert.ok(!text.includes('results are withheld'), '/work still says results are withheld');
 });
@@ -393,7 +460,8 @@ const serviceSlugs = [
 test('all nine service pages render with 4 standOut points, 3 FAQs and the figure caption', () => {
   serviceSlugs.forEach((slug, i) => {
     const html = readBuilt(`/services/${slug}`);
-    assert.ok(/<h1[\s>]/.test(html), `${slug}: missing h1`);
+    const h1s = (html.match(/<h1[\s>]/g) ?? []).length;
+    assert.equal(h1s, 1, `${slug}: expected exactly one h1, got ${h1s}`);
     const section = html.match(/<section[^>]*>(?:(?!<\/section>)[\s\S])*?What makes our(?:(?!<\/section>)[\s\S])*<\/section>/);
     assert.ok(section, `${slug}: missing stand-out section`);
     const cards = (section[0].match(/<article[\s>]/g) ?? []).length;
@@ -408,6 +476,7 @@ test('all nine service pages render with 4 standOut points, 3 FAQs and the figur
 test('unknown service slug does not build', () => {
   assert.ok(!fs.existsSync(path.join(appDir, 'services', 'nope.html')), 'services/nope.html was built');
   assert.ok(builtPath('/services/design'), 'expected at least one real service page to be built');
+  assert.equal(dynamicRouteEntry('/services/[slug]').fallback, false, '/services/[slug] must not fall back for unknown slugs');
 });
 
 test('stand-out heading is a single text node', () => {
@@ -444,14 +513,19 @@ test('business-systems page shows the revenue claim', async () => {
   );
 });
 
-function extractTag(html, tag) {
+function extractTag(html, tag, where = 'the page') {
   const m = html.match(new RegExp(String.raw`<${tag}[\s>][\s\S]*?</${tag}>`));
-  assert.ok(m, `home page has no <${tag}>`);
+  assert.ok(m, `${where} has no <${tag}>`);
   return m[0];
 }
 
+/** Extract a tag from a built route; failures name the route. */
+function builtTag(route, tag) {
+  return extractTag(readBuilt(route), tag, `route "${route}"`);
+}
+
 test('header contains links to all nine service pages', () => {
-  const header = extractTag(readBuilt('/'), 'header');
+  const header = builtTag('/', 'header');
   for (const slug of serviceSlugs) {
     assert.ok(header.includes(`href="/services/${slug}"`), `header is missing a link to /services/${slug}`);
   }
@@ -459,7 +533,7 @@ test('header contains links to all nine service pages', () => {
 });
 
 test('footer contains the grouped columns', () => {
-  const footer = extractTag(readBuilt('/'), 'footer');
+  const footer = builtTag('/', 'footer');
   for (const slug of serviceSlugs) {
     assert.ok(footer.includes(`href="/services/${slug}"`), `footer is missing a link to /services/${slug}`);
   }
@@ -476,7 +550,7 @@ test('footer contains the grouped columns', () => {
 });
 
 test('services menu button is wired for accessibility', () => {
-  const header = extractTag(readBuilt('/'), 'header');
+  const header = builtTag('/', 'header');
   const buttons = [...header.matchAll(/<button[^>]*>/g)].map((m) => m[0]);
   const menu = buttons.find((b) => b.includes('aria-expanded="false"') && /aria-controls="[^"]+"/.test(b) && !b.includes('mobile-nav'));
   assert.ok(menu, 'header has no collapsed services menu button with aria-controls');
@@ -486,7 +560,7 @@ test('services menu button is wired for accessibility', () => {
 
 test('services index links each group to its detail page and shows the AI-by-team and tech stack sections', () => {
   const html = readBuilt('/services');
-  const main = extractTag(html, 'main');
+  const main = extractTag(html, 'main', 'route "/services"');
   serviceSlugs.forEach((slug, i) => {
     const count = main.split(`href="/services/${slug}"`).length - 1;
     assert.equal(count, 1, `expected exactly one link to /services/${slug} inside <main>, got ${count}`);
@@ -504,7 +578,7 @@ test('services index links each group to its detail page and shows the AI-by-tea
 });
 
 test('services index shows the SEO, speed, hosting and revenue-growth items', () => {
-  const text = visibleText(extractTag(readBuilt('/services'), 'main'));
+  const text = visibleText(builtTag('/services', 'main'));
   const expected = [
     'SEO optimization (technical SEO, content structure, search visibility)',
     'Website speed and Core Web Vitals',
@@ -520,7 +594,7 @@ test('services index shows the SEO, speed, hosting and revenue-growth items', ()
 
 test('home shows the claims', async () => {
   const { claims } = await import('../lib/claims.ts');
-  const text = visibleText(extractTag(readBuilt('/'), 'main'));
+  const text = visibleText(builtTag('/', 'main'));
   assert.ok(text.includes(claims.timeline), 'home is missing the timeline claim');
   const costCount = text.split(claims.cost).length - 1;
   assert.ok(costCount >= 2, `expected the cost claim in the hero and the engage card, got ${costCount}`);
@@ -530,7 +604,7 @@ test('home shows the claims', async () => {
 });
 
 test('home has the four AI cards, three process rows, nine capability links, three case cards, two engagement cards', () => {
-  const main = extractTag(readBuilt('/'), 'main');
+  const main = builtTag('/', 'main');
   const text = visibleText(main);
   for (const t of [
     'Handle customer questions',
@@ -564,7 +638,7 @@ test('home has the four AI cards, three process rows, nine capability links, thr
 });
 
 test('home contains no testimonial or stats section', () => {
-  const text = visibleText(extractTag(readBuilt('/'), 'main')).toLowerCase();
+  const text = visibleText(builtTag('/', 'main')).toLowerCase();
   for (const word of ['testimonial', 'launches', 'years of']) {
     assert.ok(!text.includes(word), `home contains "${word}"`);
   }
@@ -592,8 +666,8 @@ function contactFaqs() {
   const html = readBuilt('/contact');
   const details = [...html.matchAll(/<details[\s>][\s\S]*?<\/details>/g)].map((m) => m[0]);
   return details.map((d) => ({
-    q: visibleText(extractTag(d, 'summary')).replace(/\s*\+$/, ''),
-    a: visibleText(extractTag(d, 'p')),
+    q: visibleText(extractTag(d, 'summary', 'a /contact FAQ')).replace(/\s*\+$/, ''),
+    a: visibleText(extractTag(d, 'p', 'a /contact FAQ')),
   }));
 }
 
@@ -615,7 +689,7 @@ test('contact FAQ questions are exactly the five approved', () => {
 
 test('about has the principle rows and no team or stats section', async () => {
   const { claims } = await import('../lib/claims.ts');
-  const main = extractTag(readBuilt('/about'), 'main');
+  const main = builtTag('/about', 'main');
   const text = visibleText(main);
   for (const title of ['Your information stays yours', 'Plain, maintainable engineering', 'Honest about scope']) {
     assert.ok(text.includes(title), `about is missing principle "${title}"`);
@@ -628,4 +702,37 @@ test('about has the principle rows and no team or stats section', async () => {
   for (const phrase of ['years of', 'clients served', 'projects delivered']) {
     assert.ok(!text.toLowerCase().includes(phrase), `about contains "${phrase}"`);
   }
+});
+
+/** Anchors whose own markup contains another anchor, and articles inside an anchor that contain an anchor. Returns descriptions. */
+export function nestedAnchorProblems(html) {
+  const problems = [];
+  for (const m of html.matchAll(/<a[\s>][\s\S]*?<\/a>/g)) {
+    const inner = m[0].slice(m[0].indexOf('>') + 1, -4);
+    if (/<a[\s>]/.test(inner)) problems.push(`anchor containing another anchor: ${visibleText(m[0]).slice(0, 60)}`);
+    for (const art of inner.matchAll(/<article[^>]*>([\s\S]*?)<\/article>/g)) {
+      if (/<a[\s>]/.test(art[1])) problems.push(`link-wrapped article containing an anchor: ${visibleText(art[1]).slice(0, 60)}`);
+    }
+  }
+  return problems;
+}
+
+test('nested-anchor detector self-test', () => {
+  assert.deepEqual(nestedAnchorProblems('<a href="/x"><article><h3>T</h3></article></a>'), []);
+  assert.equal(nestedAnchorProblems('<a href="/x">one <a href="/y">two</a></a>').length, 1, 'plain nested anchor');
+  assert.equal(nestedAnchorProblems('<a href="/x"><article><a href="/y">in</a></article></a>').length >= 1, true, 'anchor inside a link-wrapped article');
+  assert.deepEqual(nestedAnchorProblems('<a href="/x"><aside>not an anchor</aside></a>'), [], '<aside> is not an anchor');
+});
+
+test('no nested anchors on the main pages', () => {
+  for (const route of ['/', '/work', '/services', '/services/design', '/work/property-portal']) {
+    assert.deepEqual(nestedAnchorProblems(readBuilt(route)), [], `${route}: nested anchors`);
+  }
+});
+
+test('services index arrow motion respects reduced motion', () => {
+  const html = readBuilt('/services');
+  const classes = [...html.matchAll(/class="([^"]*)"/g)].flatMap((m) => m[1].split(/\s+/));
+  assert.ok(!classes.includes('group-hover:translate-x-1'), 'arrow translate is not wrapped in motion-safe:');
+  assert.ok(classes.includes('motion-safe:group-hover:translate-x-1'), 'services index arrow is missing motion-safe:group-hover:translate-x-1');
 });
