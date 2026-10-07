@@ -6,3 +6,6 @@ next-env.d.ts
 
 # local-only list of terms that must never ship (see docs plan Task 1)
 scripts/banned-terms.local.txt
+
+# planning docs stay local only
+docs/superpowers/
