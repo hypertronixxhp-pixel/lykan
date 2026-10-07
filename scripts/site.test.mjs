@@ -66,12 +66,16 @@ const thirtyPercentRegex = /(?<![\[\d.])30%(?![\]\d])/;
 
 /** Case-insensitive matcher for a banned term: not inside a longer word/number, but a trailing full stop is allowed. */
 export function bannedTermRegExp(term) {
-  // A leading letter is only blocked by another word character, so "www.<term>.com" and "sub.<term>.com" are caught.
-  // A leading digit/symbol is also blocked by a dot, so a numeric term is not matched inside a longer number.
-  // After the term: not a longer word, and not a dot-word ("term.baz") unless the dot-word is a common top-level domain ("term.com").
-  const after = '(?!\\w|\\.(?!(?:com|net|org|io|co|ai|app|dev|info|biz)\\b)\\w)';
-  const before = /^[a-z]/i.test(term) ? '(?<!\\w)' : '(?<![\\w.])';
-  return new RegExp(`${before}${escapeRegExp(term)}${after}`, 'i');
+  // Letter-leading terms: only a word character before/after blocks a match, so "www.<term>.com", "<term>.ae",
+  // "info@<term>.com" and "<term>.Next" are all hits (a term followed by a dot is always a hit).
+  // Digit/symbol-leading terms (e.g. a number): also blocked by a dot before and a dot-word after, so a number
+  // is not matched inside a longer number.
+  const letterLed = /^[a-z]/i.test(term);
+  const before = letterLed ? '(?<!\\w)' : '(?<![\\w.])';
+  const after = letterLed ? '(?!\\w)' : '(?!\\w|\\.\\w)';
+  // A space inside a multi-word term also matches non-breaking spaces and their entity forms.
+  const body = term.trim().split(/\s+/).map(escapeRegExp).join('(?:\\s|&nbsp;|&#160;|&#xA0;|\\u00a0)+');
+  return new RegExp(`${before}${body}${after}`, 'i');
 }
 
 test('banned-term matcher boundaries', () => {
@@ -82,7 +86,7 @@ test('banned-term matcher boundaries', () => {
   assert.ok(re.test('<b>Foo Bar</b>'), 'term followed by tag');
   assert.ok(!re.test('xFoo Bar'), 'term inside a longer word (prefix)');
   assert.ok(!re.test('Foo Barn'), 'term inside a longer word (suffix)');
-  assert.ok(!re.test('Foo Bar.baz'), 'term followed by dot-word');
+  assert.ok(re.test('Foo Bar.baz'), 'letter-led term followed by a dot is always a hit');
   const num = bannedTermRegExp('7.25');
   assert.ok(!num.test('rated 17.25 overall'), 'numeric term inside a larger number');
   assert.ok(num.test('rated 7.25 overall'), 'standalone numeric term');
@@ -94,8 +98,29 @@ test('banned-term matcher boundaries', () => {
   assert.ok(host.test('visit foo-bar.com today'), 'term as the bare host name');
   assert.ok(!host.test('foo-barn'), 'term inside a longer word (suffix)');
   assert.ok(!host.test('afoo-bar'), 'term inside a longer word (prefix)');
-  assert.ok(!host.test('foo-bar.baz'), 'term followed by a non-TLD dot-word');
-  assert.ok(!host.test('foo-bar.company'), 'term followed by a dot-word that merely starts like a TLD');
+  for (const hit of [
+    'www.foo-bar.ae',
+    'https://foo-bar.estate/listings',
+    'https://www.foo-bar.co.uk',
+    'see foo-bar.de/x',
+    'foo-bar.uk',
+    'foo-bar.properties',
+    'End of sentence about foo-bar.Next one',
+    'mail info@foo-bar.com now',
+  ]) {
+    assert.ok(host.test(hit), `host-style use not caught: ${hit}`);
+  }
+  assert.ok(!host.test('xfoo-bar.ae'), 'prefixed by a word character');
+  const multi = bannedTermRegExp('Foo Bar');
+  assert.ok(multi.test('met Foo&nbsp;Bar today'), 'entity non-breaking space');
+  assert.ok(multi.test('met Foo&#160;Bar today'), 'numeric entity non-breaking space');
+  assert.ok(multi.test('met Foo&#xA0;Bar today'), 'hex entity non-breaking space');
+  assert.ok(multi.test('met Foo\u00a0Bar today'), 'literal non-breaking space');
+  assert.ok(multi.test('met Foo  Bar today'), 'double space');
+  assert.ok(multi.test('met Foo\nBar today'), 'newline between words');
+  assert.ok(!multi.test('met FooBar today'), 'no space at all is a different word');
+  assert.ok(!num.test('rated 7.250 overall'), 'numeric term followed by more digits');
+  assert.ok(!num.test('version 7.25.1'), 'numeric term followed by a dot-number');
 });
 
 test('home page builds', () => {

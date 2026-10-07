@@ -51,13 +51,13 @@ export const projects: Project[] = [
     title: "Holiday-rental booking platform",
     category: "Hospitality",
     industry: "Hospitality",
-    summary: "A direct-booking website for a boutique rental operator, connected to its property-management system.",
+    summary: "A direct-booking website for a rental operator, connected to its property-management system.",
     scope: ["Branding", "Web design", "Web development", "System integration"],
     highlights: ["Distinctive positioning", "Real-time availability", "Editorial storytelling"],
     sections: {
       summary:
-        "A direct-booking platform for a boutique rental operator. It pairs a refined visual identity with live availability and a connection to the operator's property-management system.",
-      client: "A boutique operator of premium holiday rentals that wants guests to book with them directly.",
+        "A direct-booking platform for a rental operator. It pairs a refined visual identity with live availability and a connection to the operator's property-management system.",
+      client: "An operator of premium holiday rentals that wants guests to book with them directly.",
       challenge:
         "Browsing felt generic and marketplace-like, and high-intent guests were leaking to the large booking platforms before they ever reached the operator's own site.",
       solution:
@@ -135,7 +135,7 @@ export const projects: Project[] = [
     title: "Construction operations software",
     category: "Construction",
     industry: "Construction",
-    summary: "Internal tools that move a construction business's day-to-day operations into one system.",
+    summary: "Internal tools and workflow automation for a construction business.",
     scope: ["Workflow automation", "Internal tools"],
     highlights: [],
     sections: {
