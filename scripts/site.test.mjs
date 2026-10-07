@@ -283,3 +283,14 @@ test('work page shows the six case titles and scope pills', () => {
     assert.ok(html.includes(`>${pill}</li>`), `/work is missing scope pill "${pill}"`);
   }
 });
+
+test('home page still renders work preview and tech stack', () => {
+  const html = readBuilt('/');
+  assert.ok(html.includes('Projects we have delivered'), 'home is missing the work preview heading');
+  assert.ok(html.includes('Tech stack'), 'home is missing the tech stack heading');
+});
+
+test('work page still renders six case cards after the move', () => {
+  const cards = articleTexts(readBuilt('/work'));
+  assert.equal(cards.length, 6, `expected 6 case cards on /work, got ${cards.length}`);
+});

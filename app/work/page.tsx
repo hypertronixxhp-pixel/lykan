@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { ClosingCta, Eyebrow } from "@/components/ui";
-import { ProjectCard, WORK_NOTE } from "@/components/sections";
+import { ProjectCard, WORK_NOTE } from "@/components/CaseCards";
 import { projects } from "@/lib/work";
 
 export const metadata: Metadata = { title: "Work" };

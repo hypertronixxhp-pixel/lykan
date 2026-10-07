@@ -2,7 +2,8 @@ import Link from "next/link";
 import { Button, ClosingCta, Eyebrow } from "@/components/ui";
 import { DocumentFragment, LogisticsFragment, VideoFragment } from "@/components/ProductFragments";
 import { solutions } from "@/lib/solutions";
-import { PrivacyBlock, TechStack, WorkPreview } from "@/components/sections";
+import { PrivacyBlock, TechStack } from "@/components/sections";
+import { WorkPreview } from "@/components/CaseCards";
 import { capabilityGroups } from "@/lib/services";
 import { steps } from "@/lib/steps";
 
