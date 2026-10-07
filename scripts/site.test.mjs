@@ -227,30 +227,12 @@ test('claims module exports the five claim strings', async () => {
   const claimsUrl = new URL(`file:///${claimsPath.replace(/\\/g, '/')}`).href;
   const { claims } = await import(claimsUrl);
 
-  const expectedKeys = ['timeline', 'cost', 'revenue', 'speed', 'hosting'];
-  const actualKeys = Object.keys(claims).sort();
-  const expected = expectedKeys.sort();
-
-  assert.deepEqual(actualKeys, expected, `claims keys mismatch`);
-
-  assert.strictEqual(
-    claims.timeline,
-    'Typical projects ship in about 15 weeks, depending on scope.',
-    'timeline claim incorrect'
-  );
-  assert.strictEqual(
-    claims.cost,
-    'Around 30% lower cost than traditional agency development.',
-    'cost claim incorrect'
-  );
-  assert.strictEqual(claims.revenue, 'We help clients grow revenue.', 'revenue claim incorrect');
-  assert.strictEqual(claims.speed, 'Faster websites and applications.', 'speed claim incorrect');
-  assert.strictEqual(claims.hosting, 'Lower hosting and production costs.', 'hosting claim incorrect');
-
-  // Verify all are non-empty strings
+  // The wording is owned by lib/claims.ts and may change; the contract is the five keys, each a string.
+  const expectedKeys = ['cost', 'hosting', 'revenue', 'speed', 'timeline'];
+  assert.deepEqual(Object.keys(claims).sort(), expectedKeys, 'claims keys mismatch');
   for (const key of expectedKeys) {
     assert.ok(typeof claims[key] === 'string', `${key} is not a string`);
-    assert.ok(claims[key].length > 0, `${key} is empty`);
+    assert.ok(claims[key].trim().length > 0, `${key} is empty`);
   }
 });
 
@@ -666,6 +648,7 @@ test('home hero shows the pill and sub-line', async () => {
   const text = visibleText(hero[0]);
   assert.ok(text.includes('Private engineering partner'), 'hero is missing the pill');
   assert.ok(text.includes(claims.cost), 'hero is missing the cost sub-line');
+  assert.ok(text.includes(claims.timeline), 'hero is missing the timeline sub-line');
 });
 
 const contactFaqQuestions = [
@@ -749,4 +732,43 @@ test('services index arrow motion respects reduced motion', () => {
   const classes = [...html.matchAll(/class="([^"]*)"/g)].flatMap((m) => m[1].split(/\s+/));
   assert.ok(!classes.includes('group-hover:translate-x-1'), 'arrow translate is not wrapped in motion-safe:');
   assert.ok(classes.includes('motion-safe:group-hover:translate-x-1'), 'services index arrow is missing motion-safe:group-hover:translate-x-1');
+});
+
+test('copy stays qualified: no absolute or unconditional wording', () => {
+  const banned = [
+    'No honest team can',
+    'cannot open every door',
+    'so it stays fixed',
+    'no surprises later',
+    'removes guesswork',
+    'from the first day',
+    'nothing is lost between',
+    'without disrupting the work',
+    'Yes to both',
+    'agreed up front',
+    'usually come first',
+    'both are closed before anyone outside',
+  ];
+  for (const { file, text } of allBuiltHtml()) {
+    const visible = visibleText(text);
+    for (const phrase of banned) {
+      assert.ok(!visible.includes(phrase), `${file}: contains unqualified wording "${phrase}"`);
+    }
+  }
+  for (const f of contactFaqs()) {
+    assert.ok(!/^Yes\./.test(f.a), `FAQ "${f.q}" opens with an unconditional "Yes."`);
+  }
+});
+
+test('about leads the timeline claim in', async () => {
+  const { claims } = await import('../lib/claims.ts');
+  const text = visibleText(builtTag('/about', 'main'));
+  assert.ok(text.includes(`How long projects take: ${claims.timeline}`), 'about timeline line is missing its lead-in');
+});
+
+test('optimize page uses the speed and hosting claims', async () => {
+  const { claims } = await import('../lib/claims.ts');
+  const text = visibleText(readBuilt('/services/optimize'));
+  assert.ok(text.includes(claims.speed), 'optimize page is missing the speed claim');
+  assert.ok(text.includes(claims.hosting), 'optimize page is missing the hosting claim');
 });

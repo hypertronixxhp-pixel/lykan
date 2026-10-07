@@ -2,6 +2,9 @@ import { claims } from "./claims";
 
 // Single source of truth for what Lykan offers. Remove or add items here and the
 // home page, Services page, contact-form selector and service detail pages all update.
+/** Joins a sentence with whichever claim strings are non-empty, so an emptied claim leaves no stray space. */
+const withClaims = (text: string, ...extra: string[]) => [text, ...extra].filter(Boolean).join(" ");
+
 export type FigureMotif = "compass" | "layers" | "stack" | "gauge" | "cloud" | "network" | "chart" | "shield" | "check";
 
 export type ServiceSlug =
@@ -197,7 +200,7 @@ export const capabilityGroups: CapabilityGroup[] = [
         text: "We leave behind checks and notes so improvements are not undone by the next release. Performance becomes a habit rather than a one-off project.",
       },
     ],
-    inPractice: `We profile the busiest pages, remove what slows them down and set up checks that flag any regression. ${claims.speed}`,
+    inPractice: withClaims("We profile the busiest pages, remove what slows them down and set up checks that flag any regression.", claims.speed, claims.hosting),
     faqs: [
       {
         q: "Can you help our site rank better?",
@@ -205,7 +208,7 @@ export const capabilityGroups: CapabilityGroup[] = [
       },
       {
         q: "How do you decide what to speed up first?",
-        a: "We measure real usage and rank problems by how much they affect your users and your costs. The largest, cheapest wins usually come first.",
+        a: "We measure real usage and rank problems by how much they affect your users and your costs. The largest, cheapest wins tend to come first.",
       },
       {
         q: "Will optimizing change how the product looks?",
@@ -230,7 +233,7 @@ export const capabilityGroups: CapabilityGroup[] = [
     standOut: [
       {
         title: "Repeatable by default",
-        text: "Environments are described in code so they can be rebuilt on demand. That removes guesswork and one-off setups nobody remembers.",
+        text: "Environments are described in code so they can be rebuilt on demand. That reduces guesswork and one-off setups nobody remembers.",
       },
       {
         title: "Small, safe releases",
@@ -245,7 +248,7 @@ export const capabilityGroups: CapabilityGroup[] = [
         text: "Capacity is matched to real demand and reviewed over time. Cost is treated as part of the design, not a surprise on the invoice.",
       },
     ],
-    inPractice: `We map what each service actually needs, resize what is oversized and add alerts for spending that drifts. ${claims.hosting}`,
+    inPractice: withClaims("We map what each service actually needs, resize what is oversized and add alerts for spending that drifts.", claims.hosting),
     faqs: [
       {
         q: "How do you reduce hosting costs?",
@@ -326,7 +329,7 @@ export const capabilityGroups: CapabilityGroup[] = [
     standOut: [
       {
         title: "Shaped to your process",
-        text: "We model the way your team already works rather than forcing it into a generic template. Tools feel familiar from the first day.",
+        text: "We model the way your team already works rather than forcing it into a generic template. Tools are chosen to feel familiar.",
       },
       {
         title: "One version of the truth",
@@ -341,11 +344,11 @@ export const capabilityGroups: CapabilityGroup[] = [
         text: "Internal tools are built for daily speed, with fewer clicks and clear defaults. The people using them every day guide the design.",
       },
     ],
-    inPractice: `A sales team sees every lead, its stage and its next step in one place, and managers see the pipeline without asking for a report. ${claims.revenue}`,
+    inPractice: withClaims("A sales team sees every lead, its stage and its next step in one place, and managers see the pipeline without asking for a report.", claims.revenue),
     faqs: [
       {
         q: "Can you connect to the tools we already use?",
-        a: "In many cases, yes, through the integrations those tools offer. We check what is available early so there are no surprises later.",
+        a: "In many cases, yes, through the integrations those tools offer. We check what is available early so there are fewer surprises later.",
       },
       {
         q: "Do we need a custom system or an off-the-shelf one?",
@@ -375,7 +378,7 @@ export const capabilityGroups: CapabilityGroup[] = [
       },
       {
         title: "Least access needed",
-        text: "People and services get only the permissions their job requires. A single stolen login then cannot open every door.",
+        text: "People and services get only the permissions their job requires. A single stolen login then will not reach everything.",
       },
       {
         title: "Layers, not one wall",
@@ -386,11 +389,11 @@ export const capabilityGroups: CapabilityGroup[] = [
         text: "Logging and alerts are set up so unusual activity is seen early. Fast awareness limits how far a problem can spread.",
       },
     ],
-    inPractice: "A review turns up an overly broad admin role and a forgotten test endpoint, and both are closed before anyone outside the team finds them.",
+    inPractice: "For example, a typical review checks forgotten test endpoints and over-broad access before they can be misused.",
     faqs: [
       {
         q: "Can you make our system completely secure?",
-        a: "No honest team can. We reduce risk by finding and fixing weaknesses and by setting up detection, and we are clear about what a review does and does not cover.",
+        a: "No team can, and we say so up front. We reduce risk by finding and fixing weaknesses and by setting up detection, and we are clear about what a review does and does not cover.",
       },
       {
         q: "Do you review software you did not build?",
@@ -433,7 +436,7 @@ export const capabilityGroups: CapabilityGroup[] = [
         text: "We document decisions and setup as we go. Whoever looks after the software next can pick it up without starting from scratch.",
       },
     ],
-    inPractice: "A reported bug is reproduced, fixed, covered by a new test and noted in the handover document, so it stays fixed.",
+    inPractice: "A reported bug is reproduced, fixed, covered by a new test and noted in the handover document, so it is less likely to return.",
     faqs: [
       {
         q: "Do you support software you did not write?",

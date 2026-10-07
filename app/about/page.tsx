@@ -47,7 +47,7 @@ export default function About() {
               </li>
             ))}
           </ol>
-          <p className="mt-8 text-sm text-slate-600">{claims.timeline}</p>
+          {claims.timeline && <p className="mt-8 text-sm text-slate-600">{`How long projects take: ${claims.timeline}`}</p>}
         </div>
       </section>
       <ClosingCta />

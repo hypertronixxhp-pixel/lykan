@@ -14,19 +14,19 @@ const faqs = [
   },
   {
     q: "Do you work with early-stage products?",
-    a: "Yes. Early-stage products can be a good fit when the problem is clear enough to describe, even if the details are still moving. We can help shape a first version that is straightforward to extend as you learn more.",
+    a: "Often, yes. Early-stage products can be a good fit when the problem is clear enough to describe, even if the details are still moving. We can help shape a first version that is straightforward to extend as you learn more.",
   },
   {
     q: "How long does a project usually take?",
-    a: `${claims.timeline} A conversation about scope gives a clearer picture for your own project.`,
+    a: [claims.timeline, "A conversation about scope gives a clearer picture for your own project."].filter(Boolean).join(" "),
   },
   {
     q: "What does it cost, and is there a minimum?",
-    a: `${claims.cost} Whether there is a minimum depends on the scope, so the best way to find out is to describe what you need and hear back on what is realistic.`,
+    a: [claims.cost, "Whether there is a minimum depends on the scope, so the best way to find out is to describe what you need and hear back on what is realistic."].filter(Boolean).join(" "),
   },
   {
     q: "Can you take on one part, or work with our in-house team?",
-    a: "Yes to both. We can take on a single part of a product, or work alongside your in-house team. How the work is split is agreed up front, so responsibilities stay clear.",
+    a: "Yes, in many cases. We can take on a single part of a product, or work alongside your in-house team. How the work is split is discussed at the start, so responsibilities stay clear.",
   },
 ];
 

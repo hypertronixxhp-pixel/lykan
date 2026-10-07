@@ -37,7 +37,7 @@ const processRows = [
   },
   {
     title: "One team from design to deployment",
-    text: "The people who design the product also build, test and run it, so nothing is lost between handoffs.",
+    text: "The people who design the product also build, test and run it, so less is lost between handoffs.",
   },
   {
     title: "Automate the repetitive parts",
@@ -70,7 +70,12 @@ export default function Home() {
             <p className="rise-2 measure mt-6 text-lg text-slate-300">
               Lykan Cloud &amp; AI Services partners with teams to design and build web applications, cloud systems, and useful AI. We work closely with the people behind the product and share project details on their terms.
             </p>
-            <p className="rise-2 mt-4 text-base font-medium text-teal">{claims.cost}</p>
+            {(claims.cost || claims.timeline) && (
+              <div className="rise-2 mt-4 space-y-1">
+                {claims.cost && <p className="text-base font-medium text-teal">{claims.cost}</p>}
+                {claims.timeline && <p className="text-sm text-slate-400">{claims.timeline}</p>}
+              </div>
+            )}
             <div className="rise-3 mt-8 flex flex-wrap gap-3">
               <Button href="/contact">Discuss a project</Button>
               <Button href="/solutions" variant="ghost">See what we build</Button>
@@ -105,7 +110,7 @@ export default function Home() {
       <section className="light-band py-24">
         <div className="wrap">
           <Eyebrow tone="light">How we work</Eyebrow>
-          <h2 className="h-display max-w-2xl text-3xl sm:text-4xl">{claims.timeline}</h2>
+          {claims.timeline && <h2 className="h-display max-w-2xl text-3xl sm:text-4xl">{claims.timeline}</h2>}
           <ol className="mt-12 space-y-4">
             {processRows.map((r, i) => (
               <li key={r.title} data-process-row className="grid gap-4 rounded-xl border border-line-light bg-white p-6 sm:grid-cols-[auto_1fr_1.4fr] sm:items-center sm:gap-8 sm:p-8">
@@ -150,12 +155,12 @@ export default function Home() {
           <div className="mt-12 grid gap-6 md:grid-cols-2">
             <article className="rounded-xl border border-line-light bg-white p-8">
               <h3 className="text-xl font-semibold">Established teams</h3>
-              <p className="mt-3 text-slate-600">You have a product, a platform or an operation that needs to run better. We join your team, learn your systems and improve them without disrupting the work underway.</p>
+              <p className="mt-3 text-slate-600">You have a product, a platform or an operation that needs to run better. We join your team, learn your systems and improve them with minimal disruption to the work underway.</p>
             </article>
             <article className="rounded-xl border border-line-light bg-white p-8">
               <h3 className="text-xl font-semibold">New products</h3>
               <p className="mt-3 text-slate-600">You have an idea and need it built properly. We take it from rough concept to a running product with one team.</p>
-              <p className="mt-4 border-t border-line-light pt-4 text-sm font-medium text-text">{claims.cost}</p>
+              {claims.cost && <p className="mt-4 border-t border-line-light pt-4 text-sm font-medium text-text">{claims.cost}</p>}
             </article>
           </div>
         </div>
