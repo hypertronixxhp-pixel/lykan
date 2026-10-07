@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { capabilityGroups } from "@/lib/services";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
@@ -17,7 +18,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={inter.variable}>
       <body>
         <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-teal focus:p-3 focus:text-ink">Skip to content</a>
-        <Header />
+        <Header services={capabilityGroups.map(({ slug, name }) => ({ slug, name }))} />
         <main id="main">{children}</main>
         <Footer />
       </body>

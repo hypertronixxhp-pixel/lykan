@@ -4,6 +4,7 @@ import { Faq } from "@/components/Faq";
 import { Eyebrow } from "@/components/ui";
 import { NDA_LINE } from "@/components/sections";
 import { claims } from "@/lib/claims";
+import { capabilityGroups } from "@/lib/services";
 
 export const metadata: Metadata = {
   title: "Contact",
@@ -44,7 +45,7 @@ export default function Contact() {
             <p className="measure mt-6 text-slate-300">Share the problem at a level you are comfortable with. We can discuss sensitive details in a direct conversation.</p>
             <p className="measure mt-4 text-sm text-slate-400">{NDA_LINE}</p>
           </div>
-          <ContactForm />
+          <ContactForm topics={capabilityGroups.map((g) => g.name)} />
         </div>
       </section>
       <section className="light-band py-20">

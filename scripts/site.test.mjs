@@ -816,3 +816,40 @@ test('service pages fall back to "Selected work" only when no case is related', 
     assert.ok(!text.includes(related ? 'Selected work' : 'Recent work'), `${slug}: stale work heading`);
   }
 });
+
+test('client bundles do not ship the services prose', () => {
+  const source = fs.readFileSync(path.join(root, 'lib', 'services.ts'), 'utf8');
+  // A distinctive FAQ answer sentence made only of plain characters, so it would appear verbatim in any chunk that carried it.
+  const sentences = [...source.matchAll(/\ba: "([^"\\]+)"/g)].map((m) => m[1]);
+  const sentence = sentences.find((t) => t.length > 80 && /^[A-Za-z0-9 ,.%-]+$/.test(t));
+  assert.ok(sentence, 'could not find a plain FAQ answer in lib/services.ts to use as the probe');
+  const probe = sentence.slice(0, 60);
+  assert.ok(allBuiltHtml().some(({ text }) => text.includes(probe)), 'probe sentence is not on any built page, so the check would be vacuous');
+  const chunks = allClientChunks();
+  assert.ok(chunks.length > 0, 'no client chunks found');
+  const leaking = chunks.filter(({ text }) => text.includes(probe)).map(({ file }) => file);
+  assert.deepEqual(leaking, [], `services prose is shipped in client chunks: ${leaking.join(', ')}`);
+});
+
+test('client components do not import lib/services at runtime', () => {
+  const offenders = [];
+  let clientFiles = 0;
+  const walk = (dir) => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else if (/\.tsx?$/.test(entry.name)) {
+        const text = fs.readFileSync(full, 'utf8');
+        if (!/^\s*["']use client["']/.test(text)) continue;
+        clientFiles++;
+        const rel = path.relative(root, full).replaceAll('\\', '/');
+        for (const m of text.matchAll(/^import\s+(?!type\b)[^;]*?from\s+["']([^"']+)["']/gm)) {
+          if (/(^|\/)lib\/services$/.test(m[1])) offenders.push(rel);
+        }
+      }
+    }
+  };
+  for (const dir of ['app', 'components']) walk(path.join(root, dir));
+  assert.ok(clientFiles >= 3, `expected to find client components, found ${clientFiles}`);
+  assert.deepEqual(offenders, [], `client components import lib/services: ${offenders.join(', ')}`);
+});

@@ -1,11 +1,11 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { capabilityGroups } from "@/lib/services";
+import type { ServiceLink } from "@/lib/nav";
 
 // The panel stays in the DOM (hidden when closed) so the service links are present
 // in the server HTML and crawlable.
-export default function ServicesMenu() {
+export default function ServicesMenu({ services }: { services: ServiceLink[] }) {
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const button = useRef<HTMLButtonElement>(null);
@@ -54,7 +54,7 @@ export default function ServicesMenu() {
         hidden={!open}
         className="absolute left-0 top-full z-50 mt-3 w-72 max-w-[calc(100vw-2rem)] rounded-lg border border-line bg-ink-2 p-2 shadow-xl"
       >
-        {capabilityGroups.map((g) => (
+        {services.map((g) => (
           <li key={g.slug}>
             <Link href={`/services/${g.slug}`} className={linkClass} onClick={() => setOpen(false)}>{g.name}</Link>
           </li>

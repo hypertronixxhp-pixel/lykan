@@ -1,10 +1,9 @@
 "use client";
 import { useState } from "react";
-import { capabilityGroups } from "@/lib/services";
 
 type State = "idle" | "sending" | "success" | "error";
 
-export default function ContactForm() {
+export default function ContactForm({ topics }: { topics: string[] }) {
   const [state, setState] = useState<State>("idle");
   const [errors, setErrors] = useState<Record<string, string[]>>({});
 
@@ -40,7 +39,7 @@ export default function ContactForm() {
         <label htmlFor="topic" className="text-sm text-slate-300">What do you need? (optional)</label>
         <select id="topic" name="topic" defaultValue="" className={field}>
           <option value="">Not sure yet</option>
-          {capabilityGroups.map((g) => <option key={g.name} value={g.name}>{g.name}</option>)}
+          {topics.map((t) => <option key={t} value={t}>{t}</option>)}
           <option value="Something else">Something else</option>
         </select>
       </div>
