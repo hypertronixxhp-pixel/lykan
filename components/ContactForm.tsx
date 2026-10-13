@@ -3,10 +3,14 @@ import { useState } from "react";
 
 type State = "idle" | "sending" | "success" | "error";
 
-// Where submissions go. Unset = this site's own /api/contact route. The static GitHub Pages build sets
-// NEXT_PUBLIC_CONTACT_ENDPOINT to an external form URL, or to "" when none is configured (preview mode).
-const ENDPOINT = process.env.NEXT_PUBLIC_CONTACT_ENDPOINT ?? "/api/contact";
-const CONNECTED = "connected";
+// Where submissions go. Uses configured endpoint, falling back to static email relay on GitHub Pages/custom domain or local API route.
+const ENDPOINT =
+  process.env.NEXT_PUBLIC_CONTACT_ENDPOINT ||
+  (typeof window !== "undefined" &&
+  (window.location.hostname.includes("github.io") || window.location.hostname.includes("lykan.studio"))
+    ? "https://formsubmit.co/ajax/hypertroixx.hp@gmail.com"
+    : "/api/contact");
+const CONNECTED = true;
 
 function validate(d: Record<string, FormDataEntryValue>) {
   const e: Record<string, string[]> = {};
@@ -28,7 +32,15 @@ export default function ContactForm({ topics }: { topics: string[] }) {
     const problems = validate(data);
     if (Object.keys(problems).length) { setErrors(problems); setState("idle"); return; }
     try {
-      const res = await fetch(ENDPOINT, { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify(data) });
+      const res = await fetch(ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({
+          ...data,
+          _subject: `New Lykan AI Studio Inquiry from ${data.name || "Visitor"}`,
+          _captcha: "false",
+        }),
+      });
       if (res.status === 422) {
         const fieldErrors = (await res.json().catch(() => null))?.errors;
         if (fieldErrors && !Array.isArray(fieldErrors)) { setErrors(fieldErrors); setState("idle"); return; }
@@ -40,7 +52,14 @@ export default function ContactForm({ topics }: { topics: string[] }) {
   }
 
   if (state === "success")
-    return <p role="status" className="rounded-xl border border-teal/40 bg-teal/10 p-6">Thank you. We've received your message and will reply directly.</p>;
+    return (
+      <div role="status" className="rounded-xl border border-teal/40 bg-teal/10 p-6 text-center">
+        <h3 className="text-lg font-semibold text-white">Message Received</h3>
+        <p className="mt-2 text-sm text-slate-300">
+          Thank you. Your message has been sent successfully. Our team will review your inquiry under strict confidentiality and follow up directly.
+        </p>
+      </div>
+    );
 
   const field = "mt-1 w-full rounded-md border border-line bg-ink-2 px-3 py-2.5 text-white";
   const Err = ({ k }: { k: string }) => errors[k] ? <p id={`${k}-err`} className="mt-1 text-sm text-red-300">{errors[k][0]}</p> : null;
