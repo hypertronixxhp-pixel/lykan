@@ -6,7 +6,7 @@ type State = "idle" | "sending" | "success" | "error";
 // Where submissions go. Unset = this site's own /api/contact route. The static GitHub Pages build sets
 // NEXT_PUBLIC_CONTACT_ENDPOINT to an external form URL, or to "" when none is configured (preview mode).
 const ENDPOINT = process.env.NEXT_PUBLIC_CONTACT_ENDPOINT ?? "/api/contact";
-const CONNECTED = ENDPOINT !== "";
+const CONNECTED = ENDPOINT;
 
 function validate(d: Record<string, FormDataEntryValue>) {
   const e: Record<string, string[]> = {};
