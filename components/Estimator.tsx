@@ -189,7 +189,12 @@ export default function Estimator() {
   const [submitState, setSubmitState] = useState<"idle" | "sending" | "success" | "error">("idle");
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
-  const ENDPOINT = process.env.NEXT_PUBLIC_CONTACT_ENDPOINT ?? "/api/contact";
+  const ENDPOINT =
+    process.env.NEXT_PUBLIC_CONTACT_ENDPOINT ||
+    (typeof window !== "undefined" &&
+    (window.location.hostname.includes("github.io") || window.location.hostname.includes("lykan.studio"))
+      ? "https://formsubmit.co/ajax/hypertroixx.hp@gmail.com"
+      : "/api/contact");
 
   const handleSubmitScope = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -232,6 +237,8 @@ export default function Estimator() {
           company: company.trim(),
           topic: currentArchetype.name,
           message: assembledMessage,
+          _subject: `New Scoped Architecture Inquiry: ${currentArchetype.name} from ${name.trim()}`,
+          _captcha: "false",
         }),
       });
 
