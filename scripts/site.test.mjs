@@ -878,3 +878,21 @@ test('client components do not import lib/services at runtime', () => {
   assert.ok(clientFiles >= 3, `expected to find client components, found ${clientFiles}`);
   assert.deepEqual(offenders, [], `client components import lib/services: ${offenders.join(', ')}`);
 });
+
+test('estimator page builds and renders archetype options and blueprint', () => {
+  const html = readBuilt('/estimator');
+  assert.ok(html.includes('Interactive Scope &amp; Architecture Estimator') || html.includes('Interactive Scope & Architecture Estimator'), 'estimator page missing main heading');
+  assert.ok(html.includes('Choose your product archetype'), 'estimator missing archetype step');
+  assert.ok(html.includes('System Architecture &amp; Delivery Blueprint') || html.includes('System Architecture & Delivery Blueprint'), 'estimator missing blueprint section');
+  assert.ok(html.includes('Send your scoped requirements'), 'estimator missing send scope section');
+  assert.ok(html.includes('Send Scoped Architecture &amp; Details') || html.includes('Send Scoped Architecture & Details'), 'estimator missing submit button');
+  assert.ok(html.includes('Discuss this scope privately'), 'estimator missing CTA link');
+});
+
+test('portal page builds and renders milestone tracker and telemetry', () => {
+  const html = readBuilt('/portal');
+  assert.ok(html.includes('Client Portal &amp; System Telemetry') || html.includes('Client Portal & System Telemetry'), 'portal page missing main heading');
+  assert.ok(html.includes('Enterprise Operations Platform'), 'portal missing project environment heading');
+  assert.ok(html.includes('Sprint Roadmap &amp; Deliverables') || html.includes('Sprint Roadmap & Deliverables'), 'portal missing milestone roadmap');
+  assert.ok(html.includes('Request dedicated pod access'), 'portal missing CTA');
+});

@@ -68,7 +68,7 @@ export default function Home() {
             <p className="mb-5 inline-block rounded-full border border-line px-3 py-1 text-xs font-medium text-slate-300">Private engineering partner</p>
             <h1 className="h-display rise text-4xl sm:text-6xl">Engineering ambitious products with discretion.</h1>
             <p className="rise-2 measure mt-6 text-lg text-slate-300">
-              Lykan Cloud &amp; AI Services partners with teams to design and build web applications, cloud systems, and useful AI. We work closely with the people behind the product and share project details on their terms.
+              Lykan AI Studio partners with teams to design and build web applications, cloud systems, and useful AI. We work closely with the people behind the product and share project details on their terms.
             </p>
             {(claims.cost || claims.timeline) && (
               <div className="rise-2 mt-4 space-y-1">

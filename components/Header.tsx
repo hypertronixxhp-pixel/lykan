@@ -5,8 +5,26 @@ import { nav, type ServiceLink } from "@/lib/nav";
 import ServicesMenu from "./ServicesMenu";
 
 
+export function LogoMark({ className = "h-7 w-7" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 28 28" fill="none" aria-hidden="true">
+      <rect width="28" height="28" rx="7" fill="#111A2E" stroke="#263249" />
+      <path d="M7 8V20H11" stroke="#38C6C3" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M14 14L19 8M15.5 12.5L20 20" stroke="#658CB8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="20" cy="8" r="1.5" fill="#38C6C3" />
+    </svg>
+  );
+}
+
 export function Wordmark() {
-  return <span className="text-lg font-semibold tracking-[0.2em]">LYKAN<span className="text-teal">.</span></span>;
+  return (
+    <span className="inline-flex items-center gap-2.5">
+      <LogoMark />
+      <span className="flex items-baseline gap-1.5 text-base font-semibold tracking-[0.16em] text-white">
+        LYKAN <span className="text-[10px] font-mono uppercase tracking-[0.22em] text-teal">AI STUDIO</span>
+      </span>
+    </span>
+  );
 }
 
 const otherLinks = nav.filter(([, h]) => h !== "/services");
@@ -16,7 +34,7 @@ export default function Header({ services }: { services: ServiceLink[] }) {
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-ink/85 backdrop-blur">
       <div className="wrap flex h-16 items-center justify-between">
-        <Link href="/" aria-label="Lykan Cloud & AI Services, home" onClick={() => setOpen(false)}><Wordmark /></Link>
+        <Link href="/" aria-label="Lykan AI Studio, home" onClick={() => setOpen(false)}><Wordmark /></Link>
         <nav aria-label="Primary" className="hidden items-center gap-8 text-sm text-slate-300 lg:flex">
           <ServicesMenu services={services} />
           {otherLinks.map(([l, h]) => <Link key={h} href={h} className="hover:text-white">{l}</Link>)}

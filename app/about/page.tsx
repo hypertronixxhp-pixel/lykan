@@ -4,7 +4,7 @@ import { claims } from "@/lib/claims";
 
 export const metadata: Metadata = {
   title: "About",
-  description: "Lykan Cloud & AI Services is a private engineering partner that designs and builds web applications, cloud platforms and AI-powered workflows.",
+  description: "Lykan AI Studio is a private engineering partner that designs and builds web applications, cloud platforms and AI-powered workflows.",
 };
 
 const principles = [
@@ -29,11 +29,7 @@ export default function About() {
         <div className="wrap">
           <Eyebrow>About</Eyebrow>
           <h1 className="h-display max-w-2xl text-4xl sm:text-5xl">A private engineering partner.</h1>
-          <p className="measure mt-6 text-slate-300">Lykan Cloud &amp; AI Services designs and builds web applications, cloud platforms, and AI-powered workflows.</p>
-          {/* TODO(content): replace with approved company details — trading name, location, team, and privacy practices. */}
-          <div className="mt-10 rounded-xl border border-dashed border-line p-6 text-sm text-slate-400">
-            Company and team details will be added here once approved.
-          </div>
+          <p className="measure mt-6 text-slate-300">Lykan AI Studio designs and builds web applications, cloud platforms, and AI-powered workflows.</p>
         </div>
       </section>
       <section className="light-band py-20">

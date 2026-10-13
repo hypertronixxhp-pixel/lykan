@@ -20,7 +20,7 @@ export async function POST(req: Request) {
   try {
     const res = await fetch(hook, {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: `New Lykan inquiry\nName: ${name}\nEmail: ${email}\nCompany: ${company || "-"}\nInterest: ${topic || "-"}\n\n${message}`, name, email, company, topic, message }),
+      body: JSON.stringify({ text: `New Lykan AI Studio inquiry\nName: ${name}\nEmail: ${email}\nCompany: ${company || "-"}\nInterest: ${topic || "-"}\n\n${message}`, name, email, company, topic, message }),
     });
     if (!res.ok) throw new Error(String(res.status));
     return NextResponse.json({ ok: true });

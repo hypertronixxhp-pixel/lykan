@@ -8,7 +8,7 @@ import { capabilityGroups } from "@/lib/services";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
-  title: { default: "Lykan Cloud & AI Services — Complex products. Quietly delivered.", template: "%s | Lykan Cloud & AI Services" },
+  title: { default: "Lykan AI Studio — Complex products. Quietly delivered.", template: "%s | Lykan AI Studio" },
   description: "A private engineering partner: full-stack development, database and API optimization, cloud setup, AI chatbots and automation, testing, and bug fixing, with client work kept confidential.",
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
 };

@@ -1,4 +1,4 @@
-# Lykan Cloud & AI Services
+# Lykan AI Studio
 
 Marketing site (Next.js 16, Tailwind 4).
 

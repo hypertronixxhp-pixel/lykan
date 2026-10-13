@@ -7,7 +7,7 @@ const columns: { heading: string; links: [label: string, href: string][] }[] = [
   { heading: "Company", links: [["About", "/about"], ["Approach", "/approach"], ["Work", "/work"], ["Contact", "/contact"]] },
   { heading: "Services", links: [...capabilityGroups.map((g): [string, string] => [g.name, `/services/${g.slug}`]), ["All services", "/services"]] },
   { heading: "Solutions", links: solutions.map((s) => [s.name, `/solutions/${s.slug}`]) },
-  { heading: "Connect", links: [["Discuss a project", "/contact"], ["See what we build", "/solutions"]] },
+  { heading: "Connect", links: [["Discuss a project", "/contact"], ["See what we build", "/solutions"], ["Interactive estimator", "/estimator"], ["Client portal demo", "/portal"]] },
 ];
 
 export default function Footer() {
@@ -16,7 +16,7 @@ export default function Footer() {
       <div className="wrap flex flex-col justify-between gap-10 lg:flex-row">
         <div className="lg:max-w-xs">
           <Wordmark />
-          <p className="mt-3 max-w-xs">Lykan Cloud &amp; AI Services. Complex products, quietly delivered.</p>
+          <p className="mt-3 max-w-xs">Lykan AI Studio. Complex products, quietly delivered.</p>
         </div>
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-10">
           {columns.map((c) => (
